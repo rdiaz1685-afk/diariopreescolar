@@ -470,7 +470,7 @@ export default function DailyReports() {
     })
   }
 
-  // Generar mensaje para WhatsApp
+  // Generar mensaje para WhatsApp (Versión diaria concisa)
   const generateWhatsAppMessage = (student: any, report: any) => {
     const moods: Record<string, string> = {
       happy: 'Happy! 😁',
@@ -484,28 +484,42 @@ export default function DailyReports() {
       just_a_bite: 'Just a bite 🥺'
     };
 
-    const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
+    const dateStr = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
 
-    let message = `*📊 Daily Report - ${student.name} ${student.lastName}*\n`;
-    message += `📅 _${dateStr}_\n\n`;
+    // Extraer comportamiento de las notas si existe
+    let behaviorRaw = '';
+    const behaviorMatch = report.generalNotes?.match(/Behavior: ([\w\s!]+)\./);
+    if (behaviorMatch) {
+      behaviorRaw = behaviorMatch[1];
+    }
+
+    let message = `*Daily Report: ${student.name}* (${dateStr})\n\n`;
     message += `😊 *Mood:* ${moods[report.mood] || 'Good!'}\n`;
     message += `🍽️ *Snack:* ${intakes[report.lunchIntake] || 'N/A'}\n`;
 
+    if (behaviorRaw) message += `⭐ *Behavior:* ${behaviorRaw}\n`;
     if (report.hadNap) message += `😴 *Nap:* Yes ✅\n`;
     if (report.diaperChanged) message += `🧷 *Bathroom:* ${report.diaperNotes || 'Yes'} ✅\n`;
-    if (report.medicationGiven) message += `💊 *Medication:* ${report.medicationName || 'Yes'} ✅\n`;
 
     if (report.dailyAchievements) {
-      message += `\n⭐ *Ask me about:*\n${report.dailyAchievements}\n`;
+      message += `\n✨ *Ask me about:* ${report.dailyAchievements}\n`;
     }
 
     if (report.generalNotes) {
-      message += `\n📝 *Teacher's Notes:*\n${report.generalNotes}\n`;
+      // Limpiar prefijos de comportamiento/siesta para el mensaje
+      const cleanNotes = report.generalNotes
+        .replace(/Behavior: [\w\s!]+\.\s*/, "")
+        .replace(/Recess: [\w\s\+]+\.\s*/, "")
+        .replace(/Siesta: [\w\s\+]+\.\s*/, "")
+        .trim();
+
+      if (cleanNotes) {
+        message += `\n📝 *Note:* ${cleanNotes}\n`;
+      }
     }
 
-    message += `\n_Sent from Preschool Daily Report_`;
+    message += `\n_Keep up the good work!_`;
 
-    // Usar encodeURI para asegurar compatibilidad con emojis en WhatsApp Web
     return encodeURIComponent(message);
   };
 
@@ -628,8 +642,8 @@ export default function DailyReports() {
                 </>
               )}
 
-              {/* Send Reports: Para Admin, Rector y Director */}
-              {(currentUser?.role === 'admin' || currentUser?.role === 'rector' || currentUser?.role === 'directora' || currentUser?.role === 'vicerrector') && (
+              {/* Send Reports: Para Admin, Rector, Director y Maestras */}
+              {(currentUser?.role === 'admin' || currentUser?.role === 'rector' || currentUser?.role === 'directora' || currentUser?.role === 'vicerrector' || currentUser?.role === 'maestra') && (
                 <TabsTrigger value="send" className="gap-2 px-4 py-2 flex-shrink-0">
                   <Send className="w-4 h-4" />
                   <span className="whitespace-nowrap">Send Reports</span>
@@ -1167,46 +1181,55 @@ export default function DailyReports() {
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const report = existingReports[student.id];
-                                  if (report) {
-                                    const phone = student.parentPhone?.replace(/\D/g, '');
-                                    const message = generateWhatsAppMessage(student, report);
-                                    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
-                                  }
-                                }}
-                                className="border-green-500 text-green-600 hover:bg-green-50"
-                              >
-                                <MessageSquare className="w-4 h-4 mr-1" />
-                                WhatsApp
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const report = existingReports[student.id]
-                                  if (report) {
-                                    const fullReport = {
-                                      ...report,
-                                      student: {
-                                        name: student.name,
-                                        lastName: student.lastName,
-                                        parentEmail: student.parentEmail,
-                                        parentPhone: student.parentPhone
+                              {currentUser?.role === 'maestra' || currentUser?.role === 'admin' ? (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const report = existingReports[student.id];
+                                      if (report) {
+                                        const phone = student.parentPhone?.replace(/\D/g, '');
+                                        const message = generateWhatsAppMessage(student, report);
+                                        window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${message}`, '_blank');
                                       }
-                                    }
-                                    setEmailPreviewStudent(fullReport)
-                                  }
-                                }}
-                              >
-                                <Mail className="w-4 h-4 mr-1" />
-                                Ver correo
-                              </Button>
+                                    }}
+                                    className="border-green-500 text-green-600 hover:bg-green-50"
+                                  >
+                                    <MessageSquare className="w-4 h-4 mr-1" />
+                                    WhatsApp
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const report = existingReports[student.id]
+                                      if (report) {
+                                        const fullReport = {
+                                          ...report,
+                                          student: {
+                                            name: student.name,
+                                            lastName: student.lastName,
+                                            parentEmail: student.parentEmail,
+                                            parentPhone: student.parentPhone
+                                          }
+                                        }
+                                        setEmailPreviewStudent(fullReport)
+                                      }
+                                    }}
+                                  >
+                                    <Mail className="w-4 h-4 mr-1" />
+                                    Ver correo
+                                  </Button>
+                                </>
+                              ) : (
+                                <Badge variant="outline" className="text-slate-500">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  Listo para envío
+                                </Badge>
+                              )}
                             </div>
                           </div>
                         ))
@@ -1231,47 +1254,49 @@ export default function DailyReports() {
                 </div>
               )}
 
-              {/* Botón de envío */}
-              <Card className="lg:col-span-2 neon-border">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <h3 className="font-semibold text-lg">Send Daily Reports</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {(() => {
-                          const selectedCompleteStudent = selectedStudents.find(id =>
+              {/* Botón de envío: Solo para maestras y admin */}
+              {(currentUser?.role === 'maestra' || currentUser?.role === 'admin') && (
+                <Card className="lg:col-span-2 neon-border">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <h3 className="font-semibold text-lg">Send Daily Reports</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {(() => {
+                            const selectedCompleteStudent = selectedStudents.find(id =>
+                              existingReports[id] && (existingReports[id].mood && existingReports[id].lunchIntake)
+                            )
+                            return selectedCompleteStudent
+                              ? `Ready to send the report for the selected student`
+                              : 'Select a completed report to send'
+                          })()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            window.print();
+                          }}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download PDF
+                        </Button>
+                        <Button
+                          className="bg-green-600 hover:bg-green-700 text-white shadow-lg px-8 h-12 text-lg"
+                          onClick={() => handleSendReports('whatsapp')}
+                          disabled={selectedStudents.filter(id =>
                             existingReports[id] && (existingReports[id].mood && existingReports[id].lunchIntake)
-                          )
-                          return selectedCompleteStudent
-                            ? `Ready to send the report for the selected student`
-                            : 'Select a completed report to send'
-                        })()}
-                      </p>
+                          ).length === 0}
+                        >
+                          <MessageSquare className="w-5 h-5 mr-3" />
+                          Send via WhatsApp
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          window.print();
-                        }}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download PDF
-                      </Button>
-                      <Button
-                        className="bg-green-600 hover:bg-green-700 text-white shadow-lg px-8 h-12 text-lg"
-                        onClick={() => handleSendReports('whatsapp')}
-                        disabled={selectedStudents.filter(id =>
-                          existingReports[id] && (existingReports[id].mood && existingReports[id].lunchIntake)
-                        ).length === 0}
-                      >
-                        <MessageSquare className="w-5 h-5 mr-3" />
-                        Send via WhatsApp
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
 
