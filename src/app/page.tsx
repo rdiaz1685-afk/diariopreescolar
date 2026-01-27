@@ -1160,12 +1160,16 @@ export default function DailyReports() {
                         return studentsWithCompleteReports.map((student, index) => (
                           <div
                             key={student.id}
-                            className="flex items-center gap-4 p-4 rounded-lg border bg-secondary/50 hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-all"
+                            className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${selectedStudents.includes(student.id)
+                                ? 'border-primary bg-primary/5 shadow-md'
+                                : 'bg-secondary/50 hover:border-primary/50 hover:bg-primary/5 cursor-pointer'
+                              }`}
+                            onClick={() => toggleStudent(student.id)}
                           >
                             {selectedStudents.includes(student.id) ? (
                               <CheckCircle2 className="w-5 h-5 text-primary" />
                             ) : (
-                              <div className="w-5 h-5 rounded-full border-2 border-muted" onClick={() => toggleStudent(student.id)} />
+                              <div className="w-5 h-5 rounded-full border-2 border-muted" />
                             )}
                             <Avatar>
                               <AvatarFallback className="bg-accent text-accent-foreground">
