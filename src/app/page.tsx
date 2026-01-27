@@ -31,6 +31,7 @@ import { ParentContactEditor } from '@/components/parent-contact-editor'
 import { DashboardSummary } from '@/components/dashboard-summary'
 import { EmailReportPreview } from '@/components/email-report-preview'
 import { TeamManagement } from '@/components/team-management'
+import { FeedbackModal } from '@/components/feedback-modal'
 import {
   Baby,
   Mail,
@@ -54,7 +55,8 @@ import {
   Lock,
   Server,
   Globe,
-  Brain
+  Brain,
+  Lightbulb
 } from 'lucide-react'
 
 export default function DailyReports() {
@@ -578,6 +580,8 @@ export default function DailyReports() {
             <Button variant="outline" size="icon">
               <Bell className="w-4 h-4" />
             </Button>
+
+            <FeedbackModal />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1286,6 +1290,23 @@ export default function DailyReports() {
                   </div>
                 </div>
                 <TeamManagement />
+
+                {/* Visualizador de Sugerencias para el Admin */}
+                <div className="mt-8">
+                  <h3 className="text-xl font-bold flex items-center gap-2 mb-4">
+                    <Lightbulb className="w-5 h-5 text-primary" />
+                    Review General Suggestions
+                  </h3>
+                  <div className="p-8 text-center border-2 border-dashed rounded-xl bg-primary/5">
+                    <p className="text-muted-foreground mb-4">
+                      Collect the ideas of your entire team to continue evolving the institution.
+                    </p>
+                    <Button variant="outline" onClick={() => window.alert('Próximamente: Panel de visualización de sugerencias')}>
+                      View Suggestions Inbox
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="my-10 border-t border-dashed opacity-20" />
               </div>
             )}
