@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
                     name,
                     email,
                     role,
-                    campusId,
-                    groupId
+                    campusId: campusId || null,
+                    groupId: groupId || null
                 })
 
             if (profileError) {

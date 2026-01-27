@@ -128,7 +128,7 @@ export function TeamManagement() {
     }
 
     const downloadTemplate = () => {
-        const header = "Nombre Completo, Correo, Contraseña, Rol (maestra/directora/rector), Campus, Grupo (opcional)\n"
+        const header = "Full Name, Email, Password, Role (maestra/directora/rector/admin), Campus, Group (optional)\n"
         const example = "Maria Perez, maria@colegio.com, clave123, maestra, Mitras, Toddlers A"
         const blob = new Blob([header + example], { type: 'text/csv' })
         const url = window.URL.createObjectURL(blob)
@@ -146,19 +146,19 @@ export function TeamManagement() {
                         variant={activeView === 'list' ? 'default' : 'outline'}
                         onClick={() => setActiveView('list')}
                     >
-                        <Users className="w-4 h-4 mr-2" /> Personal Actual
+                        <Users className="w-4 h-4 mr-2" /> Current Staff
                     </Button>
                     <Button
                         variant={activeView === 'add' ? 'default' : 'outline'}
                         onClick={() => setActiveView('add')}
                     >
-                        <UserPlus className="w-4 h-4 mr-2" /> Alta Individual
+                        <UserPlus className="w-4 h-4 mr-2" /> Individual Add
                     </Button>
                     <Button
                         variant={activeView === 'bulk' ? 'default' : 'outline'}
                         onClick={() => setActiveView('bulk')}
                     >
-                        <FileSpreadsheet className="w-4 h-4 mr-2" /> Carga Masiva
+                        <FileSpreadsheet className="w-4 h-4 mr-2" /> Bulk Upload
                     </Button>
                 </div>
             </div>
@@ -166,8 +166,8 @@ export function TeamManagement() {
             {activeView === 'list' && (
                 <Card className="neon-border">
                     <CardHeader>
-                        <CardTitle>Personal del Colegio</CardTitle>
-                        <CardDescription>Lista de usuarios con acceso al sistema</CardDescription>
+                        <CardTitle>School Staff</CardTitle>
+                        <CardDescription>List of users with access to the system</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {loading ? (
@@ -181,9 +181,9 @@ export function TeamManagement() {
                                             <div className="flex gap-2 text-xs text-muted-foreground uppercase tracking-wider">
                                                 <span>{profile.role}</span>
                                                 <span>•</span>
-                                                <span>{profile.campuses?.name || 'Sin Campus'}</span>
+                                                <span>{profile.campuses?.name || 'No Campus'}</span>
                                                 <span>•</span>
-                                                <span>{profile.groups?.name || 'Sin Grupo'}</span>
+                                                <span>{profile.groups?.name || 'No Group'}</span>
                                             </div>
                                             <p className="text-sm text-primary">{profile.email}</p>
                                         </div>
@@ -198,22 +198,22 @@ export function TeamManagement() {
             {activeView === 'add' && (
                 <Card className="neon-border max-w-2xl">
                     <CardHeader>
-                        <CardTitle>Nueva Maestra</CardTitle>
-                        <CardDescription>Crea un acceso individual de forma inmediata</CardDescription>
+                        <CardTitle>New Staff Member</CardTitle>
+                        <CardDescription>Create a new individual access account</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleCreateTeacher} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Nombre Completo</Label>
+                                    <Label>Full Name</Label>
                                     <Input
                                         value={formData.name}
                                         onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        placeholder="Ej: Maria Lopez" required
+                                        placeholder="e.g. Maria Lopez" required
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Correo Institucional</Label>
+                                    <Label>Institutional Email</Label>
                                     <Input
                                         type="email"
                                         value={formData.email}
@@ -222,24 +222,25 @@ export function TeamManagement() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Contraseña Temporal</Label>
+                                    <Label>Temporary Password</Label>
                                     <Input
                                         type="text"
                                         value={formData.password}
                                         onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                        placeholder="Min. 8 caracteres" required
+                                        placeholder="Min. 8 characters" required
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Rol</Label>
+                                    <Label>Role</Label>
                                     <Select value={formData.role} onValueChange={v => setFormData({ ...formData, role: v })}>
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="maestra">Maestra</SelectItem>
-                                            <SelectItem value="directora">Directora</SelectItem>
-                                            <SelectItem value="rector">Rector/Admin</SelectItem>
+                                            <SelectItem value="maestra">Teacher</SelectItem>
+                                            <SelectItem value="directora">Director</SelectItem>
+                                            <SelectItem value="rector">Rector</SelectItem>
+                                            <SelectItem value="admin">Administrator</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -247,7 +248,7 @@ export function TeamManagement() {
                                     <Label>Campus</Label>
                                     <Select value={formData.campusId} onValueChange={v => setFormData({ ...formData, campusId: v })}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona campus" />
+                                            <SelectValue placeholder="Select campus" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {campuses.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -255,10 +256,10 @@ export function TeamManagement() {
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Grupo Asignado</Label>
+                                    <Label>Assigned Group</Label>
                                     <Select value={formData.groupId} onValueChange={v => setFormData({ ...formData, groupId: v })}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona grupo" />
+                                            <SelectValue placeholder="Select group" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {groups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
@@ -267,7 +268,7 @@ export function TeamManagement() {
                                 </div>
                             </div>
                             <Button type="submit" className="w-full" disabled={actionLoading}>
-                                {actionLoading ? <Loader2 className="animate-spin" /> : 'Registrar Maestra'}
+                                {actionLoading ? <Loader2 className="animate-spin" /> : 'Register Member'}
                             </Button>
                         </form>
                     </CardContent>
@@ -279,23 +280,23 @@ export function TeamManagement() {
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
-                                <CardTitle>Carga Masiva</CardTitle>
-                                <CardDescription>Sube a varias maestras pegando los datos de tu Excel</CardDescription>
+                                <CardTitle>Bulk Upload</CardTitle>
+                                <CardDescription>Upload multiple staff members by pasting from Excel</CardDescription>
                             </div>
                             <Button variant="outline" size="sm" onClick={downloadTemplate}>
-                                <Download className="w-4 h-4 mr-2" /> Descargar Formato
+                                <Download className="w-4 h-4 mr-2" /> Download Format
                             </Button>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="p-4 bg-primary/5 rounded-lg border border-primary/20 space-y-2">
                             <h5 className="font-bold flex items-center text-primary">
-                                <AlertCircle className="w-4 h-4 mr-2" /> Instrucciones del Excel:
+                                <AlertCircle className="w-4 h-4 mr-2" /> Excel Instructions:
                             </h5>
                             <ol className="text-sm list-decimal list-inside space-y-1 text-muted-foreground">
-                                <li>Copia las columnas de tu Excel en este orden: Nombre, Correo, Clave, Rol, Campus, Grupo.</li>
-                                <li>Pégalas en el cuadro de abajo (asegúrate que estén separadas por comas).</li>
-                                <li>El sistema creará los accesos y marcará los correos como verificados automáticamente.</li>
+                                <li>Copy columns from Excel in this order: Name, Email, Password, Role, Campus, Group.</li>
+                                <li>Paste them below (ensure they are comma-separated).</li>
+                                <li>The system will create the accounts and verify emails automatically.</li>
                             </ol>
                         </div>
 
@@ -308,7 +309,7 @@ export function TeamManagement() {
 
                         <Button className="w-full h-12" onClick={handleBulkUpload} disabled={actionLoading || !csvData}>
                             {actionLoading ? <Loader2 className="animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-                            Subir Maestras e Iniciar Procesamiento
+                            Upload Staff and Start Processing
                         </Button>
                     </CardContent>
                 </Card>

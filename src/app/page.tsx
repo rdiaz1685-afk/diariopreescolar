@@ -53,7 +53,8 @@ import {
   ShieldCheck,
   Lock,
   Server,
-  Globe
+  Globe,
+  Brain
 } from 'lucide-react'
 
 export default function DailyReports() {
@@ -71,8 +72,12 @@ export default function DailyReports() {
   const [generalNotes, setGeneralNotes] = useState('')
   const [currentDate, setCurrentDate] = useState<string>('')
   const [localDate, setLocalDate] = useState<string>('')
-  const [emailPreviewStudent, setEmailPreviewStudent] = useState<any>(null)
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [emailPreviewStudent, setEmailPreviewStudent] = useState<any>(null)
+  const [selectedBehavior, setSelectedBehavior] = useState<string>('')
+  const [recessNote, setRecessNote] = useState<string>('')
+  const [bathroomPee, setBathroomPee] = useState<boolean>(false)
+  const [bathroomPoop, setBathroomPoop] = useState<boolean>(false)
 
   // Función de cierre de sesión
   const handleLogout = async () => {
@@ -134,6 +139,7 @@ export default function DailyReports() {
   const [diaperChanged, setDiaperChanged] = useState<Record<string, boolean>>({})
   const [medicationGiven, setMedicationGiven] = useState<Record<string, boolean>>({})
   const [existingReports, setExistingReports] = useState<Record<string, any>>({})
+  const [teachersMap, setTeachersMap] = useState<Record<string, string>>({})
 
   // Cargar reportes existentes al inicio
   useEffect(() => {
@@ -170,11 +176,35 @@ export default function DailyReports() {
     }
   }, [students.length, localDate]) // Ejecutar cuando cambia el número de estudiantes o la fecha local
 
+  // Cargar mapeo de maestras
+  useEffect(() => {
+    async function fetchTeachers() {
+      const { data } = await supabase
+        .from('profiles')
+        .select('name, groupId')
+        .eq('role', 'maestra')
+
+      if (data) {
+        const map: Record<string, string> = {}
+        data.forEach(t => {
+          if (t.groupId) map[t.groupId] = t.name
+        })
+        setTeachersMap(map)
+      }
+    }
+    fetchTeachers()
+  }, [])
+
   // Cargar datos del reporte cuando se selecciona un ÚNICO alumno (Edición fluida)
   useEffect(() => {
     if (selectedStudents.length === 1) {
       const studentId = selectedStudents[0]
       const report = existingReports[studentId]
+
+      // Limpiar estados antes de cargar o si no hay reporte
+      setSelectedMood('')
+      setSelectedLunch('')
+      setGeneralNotes('')
 
       if (report) {
         console.log('Cargando reporte existente para edición:', report)
@@ -210,22 +240,55 @@ export default function DailyReports() {
             ...prev,
             [studentId]: { name: report.medicationName || '', notes: report.medicationNotes || '' }
           }))
+        } else {
+          setMedicationGiven(prev => ({ ...prev, [studentId]: false }))
+          setMedications(prev => { const n = { ...prev }; delete n[studentId]; return n; })
         }
 
         // Logros y Notas
         if (report.dailyAchievements) {
           setIndividualAchievements(prev => ({ ...prev, [studentId]: report.dailyAchievements }))
+        } else {
+          setIndividualAchievements(prev => { const n = { ...prev }; delete n[studentId]; return n; })
         }
 
         // Limpiar "Siesta: ..." de las notas generales para que no se duplique al editar
         let cleanNotes = report.generalNotes || ""
+
+        // Extraer Behavior si existe (Formato "Behavior: [Value].")
+        const behaviorMatch = cleanNotes.match(/Behavior: ([\w\s!]+)\./)
+        if (behaviorMatch) {
+          setSelectedBehavior(behaviorMatch[1].toLowerCase().replace('!', ''))
+          cleanNotes = cleanNotes.replace(/Behavior: [\w\s!]+\.\s*/, "")
+        } else {
+          setSelectedBehavior('')
+        }
+
+        // Extraer Recess si existe (Formato "Recess: [Value].")
+        const recessMatch = cleanNotes.match(/Recess: ([\w\s\+]+)\./)
+        if (recessMatch) {
+          setRecessNote(recessMatch[1])
+          cleanNotes = cleanNotes.replace(/Recess: [\w\s\+]+\.\s*/, "")
+        } else {
+          setRecessNote('')
+        }
+
         cleanNotes = cleanNotes.replace(/Siesta: [\w\s\+]+\.\s*/, "").trim()
         setGeneralNotes(cleanNotes)
+
+        // Extraer Bathroom (Pee/Poop) de diaperNotes
+        const bathroomNotes = report.diaperNotes || ""
+        setBathroomPee(bathroomNotes.includes('Pee'))
+        setBathroomPoop(bathroomNotes.includes('Poop'))
       }
     } else if (selectedStudents.length === 0) {
-      // Limpiar campos compartidos si no hay selección
+      // Limpiar campos si no hay selección
       setSelectedMood('')
       setSelectedLunch('')
+      setSelectedBehavior('')
+      setRecessNote('')
+      setBathroomPee(false)
+      setBathroomPoop(false)
       setGeneralNotes('')
     }
   }, [selectedStudents, existingReports])
@@ -272,28 +335,25 @@ export default function DailyReports() {
     `${student.name} ${student.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // Seleccionar/deseleccionar todos
+  // Seleccionar/deseleccionar todos (DESHABILITADO por petición del usuario)
   const toggleSelectAll = () => {
-    if (selectedStudents.length === filteredStudents.length) {
-      setSelectedStudents([])
-    } else {
-      setSelectedStudents(filteredStudents.map(s => s.id))
-    }
+    // Ya no se permite selección múltiple
+    return;
   }
 
-  // Toggle selección individual
+  // Toggle selección individual (Solo uno a la vez)
   const toggleStudent = (id: string) => {
     setSelectedStudents(prev =>
-      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+      prev.includes(id) ? [] : [id]
     )
   }
 
-  // Guardar todos los reportes capturados
-  const saveAllReports = async () => {
+  // Guardar el reporte del alumno seleccionado
+  const saveReport = async () => {
     if (selectedStudents.length === 0) {
       toast({
         title: 'Error',
-        description: 'Por favor selecciona al menos un estudiante',
+        description: 'Por favor selecciona un estudiante',
         variant: 'destructive'
       })
       return
@@ -305,10 +365,26 @@ export default function DailyReports() {
         const isNap = !!napValue && napValue !== "No durmió"
 
         let finalGeneralNotes = generalNotes || ""
+
+        // Agregar Comportamiento y Recreo a las notas generales
+        if (selectedBehavior) {
+          const behaviorLabel = selectedBehavior === 'excellent' ? 'Excellent!' : selectedBehavior === 'good' ? 'Good!' : 'Regular';
+          finalGeneralNotes = `Behavior: ${behaviorLabel}. ${finalGeneralNotes}`.trim();
+        }
+        if (recessNote) {
+          finalGeneralNotes = `Recess: ${recessNote}. ${finalGeneralNotes}`.trim();
+        }
+
         // Si hay una duración de siesta específica, la agregamos a las notas si no es masivo
         if (napValue && napValue !== "Sí" && napValue !== "No durmió" && selectedStudents.length === 1) {
           finalGeneralNotes = `Siesta: ${napValue}. ${finalGeneralNotes}`.trim()
         }
+
+        // Formatear notas de baño
+        let finalBathroomNotes = "";
+        if (bathroomPee) finalBathroomNotes += "Pee ";
+        if (bathroomPoop) finalBathroomNotes += "Poop";
+        finalBathroomNotes = finalBathroomNotes.trim();
 
         return {
           studentId,
@@ -316,13 +392,13 @@ export default function DailyReports() {
           ...(selectedMood && { mood: selectedMood }),
           ...(selectedLunch && { lunchIntake: selectedLunch }),
           hadNap: isNap,
-          ...(diaperChanged[studentId] !== undefined && { diaperChanged: diaperChanged[studentId] }),
-          ...(diaperChanges[studentId] && { diaperNotes: diaperChanges[studentId] }),
+          diaperChanged: bathroomPee || bathroomPoop,
+          diaperNotes: finalBathroomNotes || undefined,
           ...(medicationGiven[studentId] !== undefined && { medicationGiven: medicationGiven[studentId] }),
           ...(medications[studentId]?.name && { medicationName: medications[studentId].name }),
           ...(medications[studentId]?.notes && { medicationNotes: medications[studentId].notes }),
           ...(individualAchievements[studentId] && { dailyAchievements: individualAchievements[studentId] }),
-          generalNotes: finalGeneralNotes || null
+          generalNotes: finalGeneralNotes || undefined
         }
       })
 
@@ -338,7 +414,7 @@ export default function DailyReports() {
 
         toast({
           title: '¡Guardado!',
-          description: `Reportes guardados exitosamente para ${savedReports.length} estudiantes`,
+          description: `Reporte guardado exitosamente`,
           variant: 'default'
         })
 
@@ -346,6 +422,10 @@ export default function DailyReports() {
         setSelectedStudents([])
         setSelectedMood('')
         setSelectedLunch('')
+        setSelectedBehavior('')
+        setRecessNote('')
+        setBathroomPee(false)
+        setBathroomPoop(false)
         setGeneralNotes('')
         setNapTimes({})
         setDiaperChanges({})
@@ -369,7 +449,7 @@ export default function DailyReports() {
     if (selectedStudents.length === 0) {
       toast({
         title: 'Selección vacía',
-        description: 'Por favor selecciona al menos un estudiante.',
+        description: 'Por favor selecciona un estudiante.',
         variant: 'destructive'
       })
       return
@@ -382,8 +462,8 @@ export default function DailyReports() {
     }
 
     toast({
-      title: 'Dato Aplicado',
-      description: `Se asignó a ${selectedStudents.length} estudiantes. Haz clic en "Guardar Todo" al terminar.`,
+      title: 'Dato Actualizado',
+      description: `Se asignó al alumno. Haz clic en "Guardar Reporte" al terminar.`,
       variant: 'default'
     })
   }
@@ -391,38 +471,37 @@ export default function DailyReports() {
   // Generar mensaje para WhatsApp
   const generateWhatsAppMessage = (student: any, report: any) => {
     const moods: Record<string, string> = {
-      happy: '¡Muy feliz! 😊',
-      thoughtful: 'Pensativo 🤔',
-      sad: 'Un poco triste 😢',
-      angry: 'Enojado 😠'
+      happy: 'Happy! 😁',
+      sad: 'Sad 😢',
+      tired: 'Tired 😴'
     };
 
     const intakes: Record<string, string> = {
-      all: 'Todo 🍽️',
-      half: 'Mitad 🥗',
-      none: 'No comió 🚫'
+      all: 'All 🍱',
+      some: 'Some 🥗',
+      just_a_bite: 'Just a bite 🥺'
     };
 
-    const dateStr = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+    const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
 
-    let message = `*📊 Reporte Diario - ${student.name} ${student.lastName}*\n`;
+    let message = `*📊 Daily Report - ${student.name} ${student.lastName}*\n`;
     message += `📅 _${dateStr}_\n\n`;
-    message += `😊 *Ánimo:* ${moods[report.mood] || '¡Bien!'}\n`;
-    message += `🍽️ *Lonche:* ${intakes[report.lunchIntake] || 'N/A'}\n`;
+    message += `😊 *Mood:* ${moods[report.mood] || 'Good!'}\n`;
+    message += `🍽️ *Snack:* ${intakes[report.lunchIntake] || 'N/A'}\n`;
 
-    if (report.hadNap) message += `😴 *Siesta:* Sí ✅\n`;
-    if (report.diaperChanged) message += `🧷 *Pañal:* ${report.diaperNotes || 'Sí'} ✅\n`;
-    if (report.medicationGiven) message += `💊 *Medicamento:* ${report.medicationName || 'Sí'} ✅\n`;
+    if (report.hadNap) message += `😴 *Nap:* Yes ✅\n`;
+    if (report.diaperChanged) message += `🧷 *Bathroom:* ${report.diaperNotes || 'Yes'} ✅\n`;
+    if (report.medicationGiven) message += `💊 *Medication:* ${report.medicationName || 'Yes'} ✅\n`;
 
     if (report.dailyAchievements) {
-      message += `\n⭐ *Logro del Día:*\n${report.dailyAchievements}\n`;
+      message += `\n⭐ *Ask me about:*\n${report.dailyAchievements}\n`;
     }
 
     if (report.generalNotes) {
-      message += `\n📝 *Observaciones:*\n${report.generalNotes}\n`;
+      message += `\n📝 *Teacher's Notes:*\n${report.generalNotes}\n`;
     }
 
-    message += `\n_Enviado desde Diario Preescolar_`;
+    message += `\n_Sent from Preschool Daily Report_`;
 
     // Usar encodeURI para asegurar compatibilidad con emojis en WhatsApp Web
     return encodeURIComponent(message);
@@ -444,8 +523,8 @@ export default function DailyReports() {
     }
 
     toast({
-      title: method === 'email' ? "Abriendo correos" : "Abriendo WhatsApp",
-      description: `Procesando ${selectedCompleteStudents.length} reportes...`,
+      title: method === 'email' ? "Abriendo correo" : "Abriendo WhatsApp",
+      description: `Procesando reporte de ${students.find(s => s.id === selectedCompleteStudents[0])?.name}...`,
     });
 
     selectedCompleteStudents.forEach((id, index) => {
@@ -485,10 +564,10 @@ export default function DailyReports() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent neon-text">
-              Reportes Diarios
+              Daily Reports
             </h1>
             <p className="text-muted-foreground mt-1">
-              Sistema de reportes para preescolar con IA
+              AI-Powered Preschool Reporting System
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -509,11 +588,11 @@ export default function DailyReports() {
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer">
                   <Lock className="w-4 h-4 mr-2" />
-                  Cerrar Sesión
+                  Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -527,35 +606,37 @@ export default function DailyReports() {
               <TabsTrigger value="daily" className="gap-2 px-4 py-2 flex-shrink-0">
                 <Baby className="w-4 h-4" />
                 <span className="whitespace-nowrap">
-                  {currentUser?.role === 'maestra' ? 'Captura Diaria' : 'Supervisión'}
+                  {currentUser?.role === 'maestra' ? 'Daily Capture' : 'Supervision'}
                 </span>
               </TabsTrigger>
 
-              {/* Solo el Rector/Admin puede agregar/editar configuración global */}
-              {currentUser?.role !== 'maestra' && (
+              {/* Add Student y Settings: Solo para el rol 'admin' */}
+              {currentUser?.role === 'admin' && (
                 <>
                   <TabsTrigger value="add" className="gap-2 px-4 py-2 flex-shrink-0">
                     <Plus className="w-4 h-4" />
-                    <span className="whitespace-nowrap">Agregar Alumno</span>
+                    <span className="whitespace-nowrap">Add Student</span>
                   </TabsTrigger>
                   <TabsTrigger value="edit" className="gap-2 px-4 py-2 flex-shrink-0">
                     <Edit2 className="w-4 h-4" />
-                    <span className="whitespace-nowrap">Configuración</span>
+                    <span className="whitespace-nowrap">Settings</span>
                   </TabsTrigger>
                 </>
               )}
 
-              <TabsTrigger value="send" className="gap-2 px-4 py-2 flex-shrink-0">
-                <Send className="w-4 h-4" />
-                <span className="whitespace-nowrap">Enviar Reportes</span>
-              </TabsTrigger>
-
-              {(currentUser?.role === 'rector' || currentUser?.role === 'vicerrector') && (
-                <TabsTrigger value="security" className="gap-2 px-4 py-2 flex-shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span className="whitespace-nowrap">Seguridad</span>
+              {/* Send Reports: Para Admin, Rector y Director */}
+              {(currentUser?.role === 'admin' || currentUser?.role === 'rector' || currentUser?.role === 'directora' || currentUser?.role === 'vicerrector') && (
+                <TabsTrigger value="send" className="gap-2 px-4 py-2 flex-shrink-0">
+                  <Send className="w-4 h-4" />
+                  <span className="whitespace-nowrap">Send Reports</span>
                 </TabsTrigger>
               )}
+
+              {/* Security: Ahora accesible para todos (maestras, rector, admin) */}
+              <TabsTrigger value="security" className="gap-2 px-4 py-2 flex-shrink-0">
+                <ShieldCheck className="w-4 h-4" />
+                <span className="whitespace-nowrap">Security</span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -569,25 +650,18 @@ export default function DailyReports() {
                     <div className="relative flex-1 max-w-md">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                       <Input
-                        placeholder="Buscar estudiante..."
+                        placeholder="Search student..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10"
                       />
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Checkbox
-                        id="selectAll"
-                        checked={selectedStudents.length === filteredStudents.length && filteredStudents.length > 0}
-                        onCheckedChange={toggleSelectAll}
-                      />
-                      <Label htmlFor="selectAll">
-                        Seleccionar todos ({filteredStudents.length})
-                      </Label>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground italic">
+                      Select a student to record their daily report
                     </div>
                   </div>
                   <Badge variant={selectedStudents.length > 0 ? "default" : "secondary"}>
-                    {selectedStudents.length} seleccionados
+                    {selectedStudents.length === 1 ? "1 alumno seleccionado" : "Sin selección"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -618,27 +692,36 @@ export default function DailyReports() {
                         {filteredStudents.map((student) => (
                           <Card
                             key={student.id}
-                            className={`cursor-pointer transition-all border-2 ${selectedStudents.includes(student.id)
+                            className={`transition-all border-2 ${currentUser?.role === 'maestra' ? 'cursor-pointer' : 'cursor-default'} ${selectedStudents.includes(student.id)
                               ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
                               : existingReports[student.id]
                                 ? 'border-green-500/30 bg-green-50/50 hover:border-green-500/50'
                                 : 'border-red-500/20 bg-red-50/30 hover:border-red-500/40'
                               }`}
-                            onClick={() => toggleStudent(student.id)}
+                            onClick={() => currentUser?.role === 'maestra' && toggleStudent(student.id)}
                           >
                             <CardContent className="p-4">
                               <div className="flex items-center gap-4">
-                                <Checkbox
-                                  checked={selectedStudents.includes(student.id)}
-                                  onCheckedChange={() => toggleStudent(student.id)}
-                                  className="pointer-events-none"
-                                />
+                                {currentUser?.role === 'maestra' && (
+                                  selectedStudents.includes(student.id) ? (
+                                    <CheckCircle2 className="w-5 h-5 text-primary" />
+                                  ) : (
+                                    <div className="w-5 h-5 rounded-full border-2 border-muted" />
+                                  )
+                                )}
                                 <Avatar>
                                   <AvatarFallback className="bg-accent text-accent-foreground">
                                     {getInitials(student.name, student.lastName)}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
+                                  {currentUser?.role !== 'maestra' && (
+                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-tight flex gap-1 items-center mb-1">
+                                      <span className="bg-slate-100 px-1.5 py-0.5 rounded">{teachersMap[student.groupId] || 'No Teacher'}</span>
+                                      <span className="text-slate-300">•</span>
+                                      <span className="bg-slate-50 px-1.5 py-0.5 rounded">{student.groups?.name || 'No Group'}</span>
+                                    </div>
+                                  )}
                                   <div className="flex items-center gap-2">
                                     <h3 className="font-semibold">
                                       {student.name} {student.lastName}
@@ -677,276 +760,187 @@ export default function DailyReports() {
               {/* Panel de acciones - SOLO PARA MAESTRAS */}
               {currentUser?.role === 'maestra' ? (
                 <div className="space-y-6">
-                  {/* Estado de ánimo */}
-                  <Card className="card-hover">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Smile className="w-5 h-5 text-accent" />
-                        Estado de Ánimo
-                        {selectedStudents.length > 0 && (
-                          <Badge variant="secondary">({selectedStudents.length})</Badge>
-                        )}
+                  {/* 1. During the day I was */}
+                  <Card className="card-hover overflow-hidden border-none bg-white shadow-md ring-1 ring-blue-100">
+                    <CardHeader className="pb-2 bg-blue-50/50">
+                      <CardTitle className="text-xl font-bold text-blue-900 flex items-center gap-2">
+                        <Smile className="w-6 h-6 text-blue-600" />
+                        During the day I was
                       </CardTitle>
-                      <CardDescription>
-                        ¿Cómo estuvo de ánimo durante el día?
-                      </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[
-                          { mood: 'happy', emoji: '😊', label: 'Alegre', color: 'green' },
-                          { mood: 'thoughtful', emoji: '🤔', label: 'Pensativo', color: 'yellow' },
-                          { mood: 'sad', emoji: '😢', label: 'Triste', color: 'blue' },
-                          { mood: 'angry', emoji: '😠', label: 'Enojado', color: 'red' }
-                        ].map((item) => (
-                          <div
-                            key={item.mood}
-                            className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedMood === item.mood
-                              ? `border-${item.color}-500 bg-${item.color}-500/10`
-                              : 'hover:border-gray-500/50'
-                              }`}
-                            onClick={() => {
-                              setSelectedMood(item.mood)
-                              applyToSelected('mood', item.mood)
-                            }}
-                          >
-                            <div className="text-4xl">{item.emoji}</div>
-                            <span className="text-sm font-medium">{item.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Comida */}
-                  <Card className="card-hover">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Utensils className="w-5 h-5 text-green-500" />
-                        Lonche
-                        {selectedStudents.length > 0 && (
-                          <Badge variant="secondary">({selectedStudents.length})</Badge>
-                        )}
-                      </CardTitle>
-                      <CardDescription>
-                        ¿Cuánto se comió del lonche?
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-4">
                       <div className="grid grid-cols-3 gap-4">
                         {[
-                          { value: 'all', emoji: '🍱', label: 'Todo', color: 'green' },
-                          { value: 'half', emoji: '🥙', label: 'Mitad', color: 'yellow' },
-                          { value: 'none', emoji: '🥺', label: 'Nada', color: 'red' }
+                          { id: 'happy', emoji: '😁', label: 'Happy' },
+                          { id: 'sad', emoji: '😢', label: 'Sad' },
+                          { id: 'tired', emoji: '😴', label: 'Tired' }
                         ].map((item) => (
                           <div
-                            key={item.value}
-                            className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedLunch === item.value
-                              ? `border-${item.color}-500 bg-${item.color}-500/10`
-                              : 'hover:border-gray-500/50'
+                            key={item.id}
+                            className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all cursor-pointer ${selectedMood === item.id
+                              ? 'border-blue-500 bg-blue-50 scale-105 shadow-md shadow-blue-200/50'
+                              : 'border-slate-100 bg-slate-50/50 hover:border-blue-200'
                               }`}
-                            onClick={() => {
-                              setSelectedLunch(item.value)
-                              applyToSelected('lunchIntake', item.value)
-                            }}
+                            onClick={() => setSelectedMood(item.id)}
                           >
-                            <div className="text-3xl">{item.emoji}</div>
-                            <span className="text-sm font-medium">{item.label}</span>
+                            <span className="text-5xl">{item.emoji}</span>
+                            <span className={`text-sm font-bold uppercase tracking-wider ${selectedMood === item.id ? 'text-blue-700' : 'text-slate-600'}`}>{item.label}</span>
                           </div>
                         ))}
                       </div>
                     </CardContent>
                   </Card>
 
-                  {/* Acciones rápidas (Siesta, Pañal...) */}
-                  <Card className="card-hover">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-primary" />
-                        Acciones Rápidas
+                  {/* 2. My behavior was... */}
+                  <Card className="card-hover overflow-hidden border-none bg-white shadow-md ring-1 ring-yellow-100">
+                    <CardHeader className="pb-2 bg-yellow-50/50">
+                      <CardTitle className="text-xl font-bold text-yellow-900 flex items-center gap-2">
+                        <Award className="w-6 h-6 text-yellow-600" />
+                        My behavior was...
                       </CardTitle>
-                      <CardDescription>
-                        {selectedStudents.length > 1
-                          ? `Aplicando a ${selectedStudents.length} alumnos`
-                          : 'Ajuste individual deslizante'}
-                      </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                      {/* --- SECCIÓN SIESTA --- */}
-                      <div className="p-4 rounded-lg border bg-secondary/50">
-                        <div className="flex items-center gap-3 mb-4">
-                          <BedDouble className="w-5 h-5 text-purple-500" />
-                          <p className="font-medium">¿Durmió la siesta?</p>
-                        </div>
-
-                        {selectedStudents.length > 1 ? (
-                          // SELECCIÓN MÚLTIPLE: BOTONES RÁPIDOS
-                          <div className="grid grid-cols-2 gap-4">
-                            <Button
-                              variant="secondary"
-                              className="bg-white/70 hover:bg-purple-100"
-                              onClick={() => {
-                                selectedStudents.forEach(id => setNapTimes(prev => ({ ...prev, [id]: 'Sí' })))
-                                toast({ title: "Siesta Masiva", description: "Marcado 'Sí' para todos" })
-                              }}
-                            >Sí</Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                selectedStudents.forEach(id => {
-                                  setNapTimes(prev => { const n = { ...prev }; delete n[id]; return n; })
-                                })
-                                toast({ title: "Siesta Masiva", description: "Marcado 'No' para todos" })
-                              }}
-                            >No</Button>
+                    <CardContent className="pt-4">
+                      <div className="grid grid-cols-3 gap-4">
+                        {[
+                          { id: 'excellent', emoji: '👍', label: 'Excellent!' },
+                          { id: 'good', emoji: '😊', label: 'Good!' },
+                          { id: 'regular', emoji: '😬', label: 'Regular' }
+                        ].map((item) => (
+                          <div
+                            key={item.id}
+                            className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all cursor-pointer ${selectedBehavior === item.id
+                              ? 'border-yellow-500 bg-yellow-50 scale-105 shadow-md shadow-yellow-200/50'
+                              : 'border-slate-100 bg-slate-50/50 hover:border-yellow-200'
+                              }`}
+                            onClick={() => setSelectedBehavior(item.id)}
+                          >
+                            <span className="text-5xl">{item.emoji}</span>
+                            <span className={`text-sm font-bold uppercase tracking-wider ${selectedBehavior === item.id ? 'text-yellow-700' : 'text-slate-600'}`}>{item.label}</span>
                           </div>
-                        ) : selectedStudents.length === 1 ? (
-                          // SELECCIÓN INDIVIDUAL: SLIDER DE TIEMPO
-                          <div className="space-y-4">
-                            <div className="flex justify-between text-[10px] font-bold text-muted-foreground px-1">
-                              <span>NADA</span>
-                              <span>30m</span>
-                              <span>1h</span>
-                              <span>1.5h</span>
-                              <span>2h+</span>
-                            </div>
-                            <Slider
-                              defaultValue={[0]}
-                              max={4}
-                              step={1}
-                              onValueChange={(vals) => {
-                                const labels = ["No durmió", "30 min", "1 hora", "1.5 horas", "2 horas+"];
-                                const val = labels[vals[0]];
-                                setNapTimes(prev => ({ ...prev, [selectedStudents[0]]: val }));
-                              }}
-                            />
-                            <div className="text-center font-bold text-lg text-purple-600">
-                              {napTimes[selectedStudents[0]] || "Desliza para marcar"}
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-center text-sm text-muted-foreground italic">Selecciona alumnos en la lista</p>
-                        )}
+                        ))}
                       </div>
-
-                      {/* --- SECCIÓN PAÑAL / ROPA --- */}
-                      <div className="p-4 rounded-lg border bg-secondary/50">
-                        <div className="flex items-center gap-3 mb-4">
-                          <Baby className="w-5 h-5 text-orange-500" />
-                          <p className="font-medium">Cambio de Pañal / Ropa</p>
-                        </div>
-
-                        {selectedStudents.length > 1 ? (
-                          // SELECCIÓN MÚLTIPLE: BOTONES RÁPIDOS
-                          <div className="grid grid-cols-2 gap-4">
-                            <Button
-                              variant="secondary"
-                              className="bg-white/70 hover:bg-orange-100"
-                              onClick={() => {
-                                selectedStudents.forEach(id => {
-                                  setDiaperChanged(prev => ({ ...prev, [id]: true }))
-                                  setDiaperChanges(prev => ({ ...prev, [id]: "Cambio realizado" }))
-                                })
-                                toast({ title: "Pañal Masivo", description: "Marcado 'Sí' para todos" })
-                              }}
-                            >Sí</Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                selectedStudents.forEach(id => {
-                                  setDiaperChanged(prev => ({ ...prev, [id]: false }))
-                                  setDiaperChanges(prev => { const n = { ...prev }; delete n[id]; return n; })
-                                })
-                                toast({ title: "Pañal Masivo", description: "Marcado 'No' para todos" })
-                              }}
-                            >No</Button>
-                          </div>
-                        ) : selectedStudents.length === 1 ? (
-                          // SELECCIÓN INDIVIDUAL: SLIDER DE FRECUENCIA
-                          <div className="space-y-4">
-                            <div className="flex justify-between text-[10px] font-bold text-muted-foreground px-1">
-                              <span>0</span>
-                              <span>1</span>
-                              <span>2</span>
-                              <span>3+</span>
-                            </div>
-                            <Slider
-                              defaultValue={[0]}
-                              max={3}
-                              step={1}
-                              onValueChange={(vals) => {
-                                const count = vals[0];
-                                setDiaperChanged(prev => ({ ...prev, [selectedStudents[0]]: count > 0 }));
-                                setDiaperChanges(prev => ({ ...prev, [selectedStudents[0]]: count === 0 ? "" : `${count} cambio${count !== 1 ? 's' : ''}` }));
-                              }}
-                            />
-                            <div className="text-center font-bold text-lg text-orange-600">
-                              {diaperChanges[selectedStudents[0]] || "0 cambios"}
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-center text-sm text-muted-foreground italic">Selecciona alumnos en la lista</p>
-                        )}
-                      </div>
-
-                      {/* Medicamento - Solo modo individual */}
-                      {selectedStudents.length === 1 && (
-                        <div className="p-4 rounded-lg border border-red-200 bg-red-50/50">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Pill className="w-5 h-5 text-red-500" />
-                            <p className="font-medium">Medicamento</p>
-                          </div>
-                          <Input
-                            placeholder="Nombre y dosis (ej: Motrin 2ml)"
-                            value={medications[selectedStudents[0]]?.name || ''}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setMedicationGiven(prev => ({ ...prev, [selectedStudents[0]]: val !== '' }));
-                              setMedications(prev => ({
-                                ...prev,
-                                [selectedStudents[0]]: { name: val, notes: 'Administrado según indicación' }
-                              }));
-                            }}
-                            className="bg-white"
-                          />
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
 
-                  {/* Logros individuales */}
-                  <Card className="card-hover">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Award className="w-5 h-5 text-yellow-500" />
-                        Logros del Día
+                  {/* 3. Ask me about: */}
+                  <Card className="card-hover border-none bg-white shadow-md ring-1 ring-slate-200">
+                    <CardHeader className="pb-2 bg-slate-50/50">
+                      <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <Brain className="w-6 h-6 text-primary" />
+                        Ask me about:
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-4">
                       <Textarea
-                        placeholder="Escribe el logro del día para los seleccionados..."
+                        placeholder="Write something special the student did today..."
+                        className="min-h-[80px] text-lg bg-white border-slate-200 text-slate-900 focus:ring-primary"
+                        value={selectedStudents.length === 1 ? (individualAchievements[selectedStudents[0]] || '') : ''}
                         onChange={(e) => {
-                          const val = e.target.value;
-                          selectedStudents.forEach(id => setIndividualAchievements(prev => ({ ...prev, [id]: val })));
+                          if (selectedStudents.length === 1) {
+                            setIndividualAchievements(prev => ({ ...prev, [selectedStudents[0]]: e.target.value }));
+                          }
                         }}
                       />
                     </CardContent>
                   </Card>
 
-                  {/* Observaciones generales */}
-                  <Card className="card-hover">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Award className="w-5 h-5 text-blue-500" />
-                        Observaciones Generales
+                  {/* 4. Snack: I ate... */}
+                  <Card className="card-hover overflow-hidden border-none bg-white shadow-md ring-1 ring-green-100">
+                    <CardHeader className="pb-2 bg-green-50/50">
+                      <CardTitle className="text-xl font-bold text-green-900 flex items-center gap-2">
+                        <Utensils className="w-6 h-6 text-green-600" />
+                        Snack: I ate...
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-4">
+                      <div className="grid grid-cols-3 gap-4">
+                        {[
+                          { id: 'all', label: 'All', emoji: '🍱' },
+                          { id: 'some', label: 'Some', emoji: '🥗' },
+                          { id: 'just_a_bite', label: 'Just a bite', emoji: '🥺' }
+                        ].map((item) => (
+                          <div
+                            key={item.id}
+                            className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all cursor-pointer ${selectedLunch === item.id
+                              ? 'border-green-500 bg-green-50 scale-105 shadow-sm shadow-green-200/50'
+                              : 'border-slate-100 bg-slate-50/50 hover:border-green-200'
+                              }`}
+                            onClick={() => setSelectedLunch(item.id)}
+                          >
+                            <span className="text-3xl mb-1">{item.emoji}</span>
+                            <span className={`text-sm font-bold uppercase tracking-wider text-center ${selectedLunch === item.id ? 'text-green-700' : 'text-slate-600'}`}>{item.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* 5. Bathroom: I went to... */}
+                  <Card className="card-hover border-none bg-white shadow-md ring-1 ring-orange-100">
+                    <CardHeader className="pb-2 bg-orange-50/50">
+                      <CardTitle className="text-xl font-bold text-orange-900 flex items-center gap-2">
+                        <Baby className="w-6 h-6 text-orange-600" />
+                        Bathroom: I went to...
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div
+                          className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${bathroomPee ? 'border-orange-500 bg-orange-50 shadow-md shadow-orange-200/50' : 'border-slate-100 bg-slate-50/50 hover:border-orange-200'
+                            }`}
+                          onClick={() => setBathroomPee(!bathroomPee)}
+                        >
+                          <span className={`text-lg font-bold uppercase tracking-wider ${bathroomPee ? 'text-orange-700' : 'text-slate-600'}`}>Pee</span>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${bathroomPee ? 'bg-orange-500 text-white shadow-md' : 'bg-slate-200'}`}>
+                            {bathroomPee && <CheckCircle2 className="w-5 h-5" />}
+                          </div>
+                        </div>
+                        <div
+                          className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${bathroomPoop ? 'border-orange-500 bg-orange-50 shadow-md shadow-orange-200/50' : 'border-slate-100 bg-slate-50/50 hover:border-orange-200'
+                            }`}
+                          onClick={() => setBathroomPoop(!bathroomPoop)}
+                        >
+                          <span className={`text-lg font-bold uppercase tracking-wider ${bathroomPoop ? 'text-orange-700' : 'text-slate-600'}`}>Poop</span>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${bathroomPoop ? 'bg-orange-500 text-white shadow-md' : 'bg-slate-200'}`}>
+                            {bathroomPoop && <CheckCircle2 className="w-5 h-5" />}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* 6. Recess: I played with... */}
+                  <Card className="card-hover border-none bg-white shadow-md ring-1 ring-slate-200">
+                    <CardHeader className="pb-2 bg-slate-50/50">
+                      <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <MessageSquare className="w-6 h-6 text-primary" />
+                        Recess: I played with...
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <Input
+                        placeholder="Names of friends or favorite activities at recess..."
+                        className="text-lg bg-white border-slate-200 text-slate-900 focus:ring-primary"
+                        value={recessNote}
+                        onChange={(e) => setRecessNote(e.target.value)}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* 7. Note from teacher */}
+                  <Card className="card-hover border-none bg-white shadow-md ring-1 ring-slate-200 lg:col-span-2">
+                    <CardHeader className="pb-2 bg-slate-50/50">
+                      <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <Plus className="w-6 h-6 text-primary" />
+                        Here's a note from my teacher:
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4">
                       <Textarea
-                        placeholder="Agrega observaciones generales del día..."
+                        placeholder="Any additional messages for parents..."
+                        className="min-h-[120px] text-lg bg-white border-slate-200 text-slate-900 focus:ring-primary"
                         value={generalNotes}
                         onChange={(e) => setGeneralNotes(e.target.value)}
-                        className="min-h-[100px]"
                       />
                     </CardContent>
                   </Card>
@@ -956,43 +950,45 @@ export default function DailyReports() {
                   <Card className="bg-primary/5 border-dashed border-2">
                     <CardHeader className="text-center">
                       <ShieldCheck className="w-12 h-12 text-primary mx-auto mb-2 opacity-50" />
-                      <CardTitle>Panel de Supervisión</CardTitle>
+                      <CardTitle>Supervision Panel</CardTitle>
                       <CardDescription className="max-w-md mx-auto">
-                        Como <strong>{currentUser?.role || 'Admin'}</strong>, tienes acceso a ver todos los reportes,
-                        pero la captura está reservada para las maestras de cada grupo.
+                        As <strong>{currentUser?.role || 'User'}</strong>, you have access to view all reports,
+                        while daily capture is reserved for teachers.
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="flex justify-center pb-8">
-                      <Button variant="outline" onClick={() => setActiveTab('security')}>
-                        Gestionar Personal
-                      </Button>
-                    </CardContent>
+                    {currentUser?.role === 'admin' && (
+                      <CardContent className="flex justify-center pb-8">
+                        <Button variant="outline" onClick={() => setActiveTab('security')}>
+                          Manage Staff
+                        </Button>
+                      </CardContent>
+                    )}
                   </Card>
 
                 </div>
               )}
 
-              {/* Botón de Guardar */}
-              {selectedStudents.length > 0 && (
+              {/* Botón de Guardar: Solo para maestras */}
+              {selectedStudents.length > 0 && currentUser?.role === 'maestra' && (
                 <Card className="neon-border">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-semibold text-lg">
-                          {selectedStudents.length} {selectedStudents.length === 1 ? 'estudiante seleccionado' : 'estudiantes seleccionados'}
+                          Confirmar Reporte
                         </h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Las actividades capturadas se guardarán para los estudiantes seleccionados
+                          Los datos capturados se guardarán para el alumno seleccionado
                         </p>
                       </div>
                       <Button
-                        onClick={saveAllReports}
+                        onClick={saveReport}
                         disabled={saving}
                         className="neon-accent"
                         size="lg"
                       >
                         <Save className="w-5 h-5 mr-2" />
-                        {saving ? 'Guardando...' : 'Guardar Todo'}
+                        {saving ? 'Guardando...' : 'Guardar Reporte'}
                       </Button>
                     </div>
                   </CardContent>
@@ -1000,7 +996,7 @@ export default function DailyReports() {
               )}
 
               {/* Resumen del Día */}
-              <DashboardSummary />
+              <DashboardSummary userRole={currentUser?.role} />
             </div>
           </TabsContent>
 
@@ -1022,7 +1018,7 @@ export default function DailyReports() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Send className="w-5 h-5 text-primary" />
-                    Resumen del Día
+                    Daily Summary
                   </CardTitle>
                   <CardDescription>Estado de los reportes de hoy</CardDescription>
                 </CardHeader>
@@ -1148,10 +1144,11 @@ export default function DailyReports() {
                             key={student.id}
                             className="flex items-center gap-4 p-4 rounded-lg border bg-secondary/50 hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-all"
                           >
-                            <Checkbox
-                              checked={selectedStudents.includes(student.id)}
-                              onCheckedChange={() => toggleStudent(student.id)}
-                            />
+                            {selectedStudents.includes(student.id) ? (
+                              <CheckCircle2 className="w-5 h-5 text-primary" />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full border-2 border-muted" onClick={() => toggleStudent(student.id)} />
+                            )}
                             <Avatar>
                               <AvatarFallback className="bg-accent text-accent-foreground">
                                 {getInitials(student.name, student.lastName)}
@@ -1235,16 +1232,15 @@ export default function DailyReports() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <h3 className="font-semibold">Enviar Reportes del Día</h3>
+                      <h3 className="font-semibold text-lg">Send Daily Reports</h3>
                       <p className="text-sm text-muted-foreground">
                         {(() => {
-                          // Calcular estudiantes con reportes completos seleccionados para enviar
-                          const selectedCompleteStudents = selectedStudents.filter(id =>
+                          const selectedCompleteStudent = selectedStudents.find(id =>
                             existingReports[id] && (existingReports[id].mood && existingReports[id].lunchIntake)
-                          ).length
-                          return selectedCompleteStudents > 0
-                            ? `Se enviarán ${selectedCompleteStudents} reporte${selectedCompleteStudents !== 1 ? 's' : ''} seleccionado${selectedCompleteStudents !== 1 ? 's' : ''} por correo electrónico`
-                            : 'Selecciona los reportes completos que deseas enviar'
+                          )
+                          return selectedCompleteStudent
+                            ? `Ready to send the report for the selected student`
+                            : 'Select a completed report to send'
                         })()}
                       </p>
                     </div>
@@ -1256,7 +1252,7 @@ export default function DailyReports() {
                         }}
                       >
                         <Download className="w-4 h-4 mr-2" />
-                        Descargar PDF
+                        Download PDF
                       </Button>
                       <Button
                         className="bg-green-600 hover:bg-green-700 text-white shadow-lg px-8 h-12 text-lg"
@@ -1266,7 +1262,7 @@ export default function DailyReports() {
                         ).length === 0}
                       >
                         <MessageSquare className="w-5 h-5 mr-3" />
-                        Enviar Reportes por WhatsApp
+                        Send via WhatsApp
                       </Button>
                     </div>
                   </div>
@@ -1277,8 +1273,8 @@ export default function DailyReports() {
 
           {/* Tab 5: Seguridad y Gestión de Personal */}
           <TabsContent value="security" className="space-y-6">
-            {/* Si el usuario es rector o admin, mostrar gestión de equipo */}
-            {(currentUser?.role === 'rector' || currentUser?.role === 'admin' || currentUser?.role === 'directora') && (
+            {/* El Panel de Administración (Gestión de Personal) para 'admin' y 'rector' */}
+            {(currentUser?.role === 'admin' || currentUser?.role === 'rector') && (
               <div className="mb-10">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-3 bg-primary/10 rounded-xl">

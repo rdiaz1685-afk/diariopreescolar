@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('students')
-      .select('*')
+      .select('*, groups(name)')
       .order('name', { ascending: true })
 
     // Filtrado por jerarquía

@@ -35,16 +35,15 @@ interface EnhancedStudentCardProps {
 }
 
 const moodEmojis: Record<string, string> = {
-  happy: '😊',
-  thoughtful: '🤔',
+  happy: '😁',
   sad: '😢',
-  angry: '😠'
+  tired: '😴'
 }
 
 const lunchIcons: Record<string, any> = {
   all: <Utensils className="w-4 h-4 text-green-500" />,
-  half: <Utensils className="w-4 h-4 text-yellow-500" />,
-  none: <Utensils className="w-4 h-4 text-red-500" />
+  some: <Utensils className="w-4 h-4 text-yellow-500" />,
+  just_a_bite: <Utensils className="w-4 h-4 text-red-500" />
 }
 
 export function EnhancedStudentCard({ student, report, selected, onSelect, onQuickCheck }: EnhancedStudentCardProps) {
@@ -73,11 +72,10 @@ export function EnhancedStudentCard({ student, report, selected, onSelect, onQui
 
   return (
     <Card
-      className={`cursor-pointer transition-all ${
-        selected
+      className={`cursor-pointer transition-all ${selected
           ? 'border-primary bg-primary/5 neon-border'
           : 'hover:border-primary/50'
-      }`}
+        }`}
       onClick={() => onSelect(student.id)}
     >
       <CardContent className="p-4">
@@ -115,32 +113,19 @@ export function EnhancedStudentCard({ student, report, selected, onSelect, onQui
           <div className="flex items-center justify-between p-2 rounded-md bg-secondary/30">
             <div className="flex items-center gap-2">
               <Smile className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Ánimo:</span>
+              <span className="text-sm text-muted-foreground">Mood:</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  setQuickChecks({ ...quickChecks, mood: null })
-                  onQuickCheck(student.id, 'mood', null)
+                  setQuickChecks({ ...quickChecks, mood: 'happy' })
+                  onQuickCheck(student.id, 'mood', 'happy')
                 }}
-                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${
-                  !quickChecks.mood ? 'bg-muted-foreground/20' : 'bg-green-500/20 hover:bg-green-500/30'
-                }`}
+                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${quickChecks.mood === 'happy' ? 'bg-green-500 text-white shadow-sm' : 'bg-green-100/50 hover:bg-green-200'
+                  }`}
               >
-                <span className="text-lg">{moodEmojis.happy || '😊'}</span>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setQuickChecks({ ...quickChecks, mood: 'thoughtful' })
-                  onQuickCheck(student.id, 'mood', 'thoughtful')
-                }}
-                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${
-                  quickChecks.mood === 'thoughtful' ? 'bg-yellow-500 text-white' : 'bg-yellow-500/20 hover:bg-yellow-500/30'
-                }`}
-              >
-                <span className="text-lg">{moodEmojis.thoughtful || '🤔'}</span>
+                <span className="text-lg">{moodEmojis.happy}</span>
               </button>
               <button
                 onClick={(e) => {
@@ -148,23 +133,21 @@ export function EnhancedStudentCard({ student, report, selected, onSelect, onQui
                   setQuickChecks({ ...quickChecks, mood: 'sad' })
                   onQuickCheck(student.id, 'mood', 'sad')
                 }}
-                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${
-                  quickChecks.mood === 'sad' ? 'bg-blue-500 text-white' : 'bg-blue-500/20 hover:bg-blue-500/30'
-                }`}
+                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${quickChecks.mood === 'sad' ? 'bg-blue-500 text-white shadow-sm' : 'bg-blue-100/50 hover:bg-blue-200'
+                  }`}
               >
-                <span className="text-lg">{moodEmojis.sad || '😢'}</span>
+                <span className="text-lg">{moodEmojis.sad}</span>
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  setQuickChecks({ ...quickChecks, mood: 'angry' })
-                  onQuickCheck(student.id, 'mood', 'angry')
+                  setQuickChecks({ ...quickChecks, mood: 'tired' })
+                  onQuickCheck(student.id, 'mood', 'tired')
                 }}
-                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${
-                  quickChecks.mood === 'angry' ? 'bg-red-500 text-white' : 'bg-red-500/20 hover:bg-red-500/30'
-                }`}
+                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${quickChecks.mood === 'tired' ? 'bg-purple-500 text-white shadow-sm' : 'bg-purple-100/50 hover:bg-purple-200'
+                  }`}
               >
-                <span className="text-lg">{moodEmojis.angry || '😠'}</span>
+                <span className="text-lg">{moodEmojis.tired}</span>
               </button>
             </div>
           </div>
@@ -173,7 +156,7 @@ export function EnhancedStudentCard({ student, report, selected, onSelect, onQui
           <div className="flex items-center justify-between p-2 rounded-md bg-secondary/30">
             <div className="flex items-center gap-2">
               <Utensils className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Lonche:</span>
+              <span className="text-sm text-muted-foreground">Snack:</span>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -182,33 +165,30 @@ export function EnhancedStudentCard({ student, report, selected, onSelect, onQui
                   setQuickChecks({ ...quickChecks, lunchIntake: 'all' })
                   onQuickCheck(student.id, 'lunchIntake', 'all')
                 }}
-                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${
-                  quickChecks.lunchIntake === 'all' ? 'bg-green-500 text-white' : 'bg-green-500/20 hover:bg-green-500/30'
-                }`}
+                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${quickChecks.lunchIntake === 'all' ? 'bg-green-500 text-white' : 'bg-green-100 hover:bg-green-200'
+                  }`}
               >
                 <Utensils className="w-4 h-4" />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  setQuickChecks({ ...quickChecks, lunchIntake: 'half' })
-                  onQuickCheck(student.id, 'lunchIntake', 'half')
+                  setQuickChecks({ ...quickChecks, lunchIntake: 'some' })
+                  onQuickCheck(student.id, 'lunchIntake', 'some')
                 }}
-                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${
-                  quickChecks.lunchIntake === 'half' ? 'bg-yellow-500 text-white' : 'bg-yellow-500/20 hover:bg-yellow-500/30'
-                }`}
+                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${quickChecks.lunchIntake === 'some' ? 'bg-yellow-500 text-white' : 'bg-yellow-100 hover:bg-yellow-200'
+                  }`}
               >
                 <Utensils className="w-4 h-4" />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  setQuickChecks({ ...quickChecks, lunchIntake: 'none' })
-                  onQuickCheck(student.id, 'lunchIntake', 'none')
+                  setQuickChecks({ ...quickChecks, lunchIntake: 'just_a_bite' })
+                  onQuickCheck(student.id, 'lunchIntake', 'just_a_bite')
                 }}
-                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${
-                  quickChecks.lunchIntake === 'none' ? 'bg-red-500 text-white' : 'bg-red-500/20 hover:bg-red-500/30'
-                }`}
+                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center transition-all ${quickChecks.lunchIntake === 'just_a_bite' ? 'bg-red-500 text-white' : 'bg-red-100 hover:bg-red-200'
+                  }`}
               >
                 <Utensils className="w-4 h-4" />
               </button>
@@ -221,7 +201,7 @@ export function EnhancedStudentCard({ student, report, selected, onSelect, onQui
             <div className="flex-1 flex items-center justify-between p-2 rounded-md bg-secondary/30">
               <div className="flex items-center gap-2">
                 <Moon className="w-4 h-4 text-purple-500" />
-                <span className="text-sm">Siesta:</span>
+                <span className="text-sm">Nap:</span>
               </div>
               <button
                 onClick={(e) => {
@@ -229,9 +209,8 @@ export function EnhancedStudentCard({ student, report, selected, onSelect, onQui
                   setQuickChecks({ ...quickChecks, hadNap: !quickChecks.hadNap })
                   onQuickCheck(student.id, 'hadNap', !quickChecks.hadNap)
                 }}
-                className={`p-2 rounded-md transition-all flex items-center gap-2 ${
-                  quickChecks.hadNap ? 'bg-purple-500 text-white' : 'bg-purple-500/20 hover:bg-purple-500/30'
-                }`}
+                className={`p-2 rounded-md transition-all flex items-center gap-2 ${quickChecks.hadNap ? 'bg-purple-500 text-white' : 'bg-purple-500/20 hover:bg-purple-500/30'
+                  }`}
               >
                 <Bed className="w-5 h-5" />
                 <Zap className="w-4 h-4" />
@@ -242,7 +221,7 @@ export function EnhancedStudentCard({ student, report, selected, onSelect, onQui
             <div className="flex-1 flex items-center justify-between p-2 rounded-md bg-secondary/30">
               <div className="flex items-center gap-2">
                 <Baby className="w-4 h-4 text-orange-500" />
-                <span className="text-sm">Pañal:</span>
+                <span className="text-sm">Bathroom:</span>
               </div>
               <button
                 onClick={(e) => {
@@ -250,9 +229,8 @@ export function EnhancedStudentCard({ student, report, selected, onSelect, onQui
                   setQuickChecks({ ...quickChecks, diaperChanged: !quickChecks.diaperChanged })
                   onQuickCheck(student.id, 'diaperChanged', !quickChecks.diaperChanged)
                 }}
-                className={`p-2 rounded-md transition-all ${
-                  quickChecks.diaperChanged ? 'bg-orange-500 text-white' : 'bg-orange-500/20 hover:bg-orange-500/30'
-                }`}
+                className={`p-2 rounded-md transition-all ${quickChecks.diaperChanged ? 'bg-orange-500 text-white' : 'bg-orange-500/20 hover:bg-orange-500/30'
+                  }`}
               >
                 <CheckCircle2 className="w-5 h-5" />
               </button>
@@ -270,9 +248,8 @@ export function EnhancedStudentCard({ student, report, selected, onSelect, onQui
                   setQuickChecks({ ...quickChecks, medicationGiven: !quickChecks.medicationGiven })
                   onQuickCheck(student.id, 'medicationGiven', !quickChecks.medicationGiven)
                 }}
-                className={`p-2 rounded-md transition-all ${
-                  quickChecks.medicationGiven ? 'bg-red-500 text-white' : 'bg-red-500/20 hover:bg-red-500/30'
-                }`}
+                className={`p-2 rounded-md transition-all ${quickChecks.medicationGiven ? 'bg-red-500 text-white' : 'bg-red-500/20 hover:bg-red-500/30'
+                  }`}
               >
                 <Zap className="w-5 h-5" />
               </button>
@@ -281,7 +258,7 @@ export function EnhancedStudentCard({ student, report, selected, onSelect, onQui
 
           {/* Checkbox para marcar como completado */}
           <div className="flex items-center justify-between p-2 rounded-md bg-primary/5">
-            <span className="text-sm text-muted-foreground">Reporte completado</span>
+            <span className="text-sm text-muted-foreground font-medium">Report complete</span>
             <Checkbox
               checked={!!(report?.mood && report.lunchIntake)}
               onClick={(e) => e.stopPropagation()}

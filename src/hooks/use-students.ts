@@ -11,6 +11,8 @@ export interface Student {
   parentEmail: string
   parentPhone: string
   medicalNotes: string | null
+  groupId: string
+  groups?: { name: string }
   createdAt: Date
   updatedAt: Date
 }
@@ -63,23 +65,25 @@ export function useStudents() {
     }
   }, [])
 
-  return { students, loading, error, refetch: () => {
-    const fetchStudents = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const response = await fetch('/api/students')
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-        const data = await response.json()
-        setStudents(Array.isArray(data) ? data : [])
-      } catch (err) {
-        console.error('Error refetching students:', err)
-        setError(err instanceof Error ? err.message : 'Unknown error')
-        setStudents([])
-      } finally {
-        setLoading(false)
+  return {
+    students, loading, error, refetch: () => {
+      const fetchStudents = async () => {
+        try {
+          setLoading(true)
+          setError(null)
+          const response = await fetch('/api/students')
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+          const data = await response.json()
+          setStudents(Array.isArray(data) ? data : [])
+        } catch (err) {
+          console.error('Error refetching students:', err)
+          setError(err instanceof Error ? err.message : 'Unknown error')
+          setStudents([])
+        } finally {
+          setLoading(false)
+        }
       }
+      fetchStudents()
     }
-    fetchStudents()
-  }}
+  }
 }

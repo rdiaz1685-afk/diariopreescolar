@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     // NOTA: Para simplificar, buscamos los reportes que coincidan con la fecha ISO YYYY-MM-DD
     let reportsQuery = supabase
       .from('daily_reports')
-      .select('*, student:students(id, name, "lastName", "groupId")')
+      .select('*, students(id, name, "lastName", "groupId", groups(name))')
       .eq('date', date)
 
     if (effectiveGroupId) {
@@ -57,10 +57,10 @@ export async function GET(request: NextRequest) {
 
     if (reportsError) throw reportsError
 
-    // Obtener todos los estudiantes del grupo para saber quiénes faltan
+    // Obtener todos los estudiantes con sus nombres de grupo
     let studentsQuery = supabase
       .from('students')
-      .select('id, name, "lastName", "groupId"')
+      .select('id, name, "lastName", "groupId", groups(name)')
       .order('name', { ascending: true })
 
     if (effectiveGroupId) {
@@ -70,8 +70,20 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: allStudents, error: studentsError } = await studentsQuery
-
     if (studentsError) throw studentsError
+
+    // Obtener nombres de maestras para cada grupo involucrado
+    const groupIds = Array.from(new Set(allStudents?.map(s => s.groupId).filter(Boolean)))
+    const { data: teachers } = await supabase
+      .from('profiles')
+      .select('name, groupId')
+      .eq('role', 'maestra')
+      .in('groupId', groupIds)
+
+    const teacherMap = new Map()
+    teachers?.forEach(t => {
+      teacherMap.set(t.groupId, t.name)
+    })
 
     // Agrupar reportes por estudiante
     const reportsByStudent = new Map()
@@ -84,9 +96,9 @@ export async function GET(request: NextRequest) {
           studentLastName: report.student?.lastName || '',
           hasMood: false,
           hasLunch: false,
-          hasNap: false,
-          hasDiaperChanged: false,
-          hasMeds: false,
+          hasBehavior: false,
+          hasBathroom: false,
+          hasRecess: false,
           hasAchievements: false,
           isComplete: false
         })
@@ -95,12 +107,19 @@ export async function GET(request: NextRequest) {
 
       if (report.mood) studentReport.hasMood = true
       if (report.lunchIntake) studentReport.hasLunch = true
-      if (report.hadNap) studentReport.hasNap = true
-      if (report.diaperChanged) studentReport.hasDiaperChanged = true
-      if (report.medicationGiven) studentReport.hasMeds = true
+      if (report.diaperChanged) studentReport.hasBathroom = true
       if (report.dailyAchievements && report.dailyAchievements.trim()) studentReport.hasAchievements = true
 
-      if (studentReport.hasMood && studentReport.hasLunch) {
+      // Info de grupo y maestra (info extra)
+      studentReport.groupName = report.students?.groups?.name || 'No Group'
+      studentReport.teacherName = teacherMap.get(report.students?.groupId) || 'No Teacher'
+
+      // Detección en notas generales para los nuevos campos
+      const notes = report.generalNotes || ""
+      if (notes.includes("Behavior:")) studentReport.hasBehavior = true
+      if (notes.includes("Recess:")) studentReport.hasRecess = true
+
+      if (studentReport.hasMood && studentReport.hasLunch && studentReport.hasBehavior) {
         studentReport.isComplete = true
       }
     })
@@ -113,11 +132,13 @@ export async function GET(request: NextRequest) {
         studentId,
         studentName: student.name,
         studentLastName: student.lastName,
+        groupName: student.groups?.name || 'No Group',
+        teacherName: teacherMap.get(student.groupId) || 'No Teacher',
         hasMood: false,
         hasLunch: false,
-        hasNap: false,
-        hasDiaperChanged: false,
-        hasMeds: false,
+        hasBehavior: false,
+        hasBathroom: false,
+        hasRecess: false,
         hasAchievements: false,
         isComplete: false
       }
@@ -140,9 +161,9 @@ export async function GET(request: NextRequest) {
       incompleteStudents,
       withMood: studentSummaries.filter(s => s.hasMood).length,
       withLunch: studentSummaries.filter(s => s.hasLunch).length,
-      withNap: studentSummaries.filter(s => s.hasNap).length,
-      withDiaperChanged: studentSummaries.filter(s => s.hasDiaperChanged).length,
-      withMeds: studentSummaries.filter(s => s.hasMeds).length,
+      withBehavior: studentSummaries.filter(s => s.hasBehavior).length,
+      withBathroom: studentSummaries.filter(s => s.hasBathroom).length,
+      withRecess: studentSummaries.filter(s => s.hasRecess).length,
       withAchievements: studentSummaries.filter(s => s.hasAchievements).length,
       studentSummaries
     }

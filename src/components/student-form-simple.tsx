@@ -126,8 +126,8 @@ export function StudentFormSimple() {
       const student = await response.json()
 
       toast({
-        title: 'Estudiante creado',
-        description: `${student.name} ${student.lastName} se ha agregado exitosamente`
+        title: 'Student created',
+        description: `${student.name} ${student.lastName} has been added successfully`
       })
 
       setFormData({
@@ -198,7 +198,7 @@ export function StudentFormSimple() {
       const result = await response.json()
 
       toast({
-        title: 'Estudiantes creados',
+        title: 'Students created',
         description: result.message
       })
 
@@ -221,7 +221,7 @@ export function StudentFormSimple() {
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="animate-spin inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
-          <p className="text-muted-foreground">Procesando...</p>
+          <p className="text-muted-foreground">Processing...</p>
         </div>
       </div>
     )
@@ -233,10 +233,10 @@ export function StudentFormSimple() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
-            Gestión de Estudiantes
+            Student Management
           </CardTitle>
           <CardDescription>
-            Agrega estudiantes de forma individual o en lote
+            Add students individually or in bulk
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -248,7 +248,7 @@ export function StudentFormSimple() {
               className="flex-1"
             >
               <Baby className="w-4 h-4 mr-2" />
-              Agregar Uno
+              Add Single
             </Button>
             <Button
               variant={activeTab === 'batch' ? 'default' : 'outline'}
@@ -256,7 +256,7 @@ export function StudentFormSimple() {
               className="flex-1"
             >
               <Upload className="w-4 h-4 mr-2" />
-              Carga Masiva
+              Bulk Upload
             </Button>
           </div>
 
@@ -265,7 +265,7 @@ export function StudentFormSimple() {
             <form onSubmit={handleSubmit} className="space-y-4 relative" style={{ isolation: 'isolate' }}>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nombre *</Label>
+                  <Label htmlFor="name">First Name *</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -275,7 +275,7 @@ export function StudentFormSimple() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Apellido *</Label>
+                  <Label htmlFor="lastName">Last Name *</Label>
                   <Input
                     id="lastName"
                     value={formData.lastName}
@@ -285,7 +285,7 @@ export function StudentFormSimple() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Fecha de Nacimiento *</Label>
+                  <Label htmlFor="dateOfBirth">Date of Birth *</Label>
                   <Input
                     id="dateOfBirth"
                     type="date"
@@ -296,14 +296,14 @@ export function StudentFormSimple() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="gender">Género *</Label>
+                  <Label htmlFor="gender">Gender *</Label>
                   <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar" />
+                      <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="M">Masculino</SelectItem>
-                      <SelectItem value="F">Femenino</SelectItem>
+                      <SelectItem value="M">Male</SelectItem>
+                      <SelectItem value="F">Female</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -312,7 +312,7 @@ export function StudentFormSimple() {
                   <Label htmlFor="campus">Campus *</Label>
                   {campuses.length === 0 ? (
                     <div className="p-4 text-sm text-muted-foreground bg-muted rounded-md">
-                      Preparando la base de datos, por favor espera un momento...
+                      Preparing database, please wait a moment...
                     </div>
                   ) : (
                     <Select value={formData.campusId} onValueChange={(value) => {
@@ -320,7 +320,7 @@ export function StudentFormSimple() {
                       setSelectedCampus(value)
                     }}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar campus" />
+                        <SelectValue placeholder="Select campus" />
                       </SelectTrigger>
                       <SelectContent>
                         {campuses.map((campus) => (
@@ -334,10 +334,10 @@ export function StudentFormSimple() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="group">Grupo *</Label>
+                  <Label htmlFor="group">Group *</Label>
                   <Select value={formData.groupId} onValueChange={(value) => setFormData({ ...formData, groupId: value })} disabled={!selectedCampus}>
                     <SelectTrigger>
-                      <SelectValue placeholder={selectedCampus ? "Seleccionar grupo" : "Selecciona campus primero"} />
+                      <SelectValue placeholder={selectedCampus ? "Select group" : "Select campus first"} />
                     </SelectTrigger>
                     <SelectContent>
                       {groups.map((group) => (
@@ -350,7 +350,7 @@ export function StudentFormSimple() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyContact">Contacto de Emergencia</Label>
+                  <Label htmlFor="emergencyContact">Emergency Contact</Label>
                   <Input
                     id="emergencyContact"
                     value={formData.emergencyContact}
@@ -359,7 +359,7 @@ export function StudentFormSimple() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyPhone">Teléfono de Emergencia</Label>
+                  <Label htmlFor="emergencyPhone">Emergency Phone</Label>
                   <Input
                     id="emergencyPhone"
                     value={formData.emergencyPhone}
@@ -368,7 +368,7 @@ export function StudentFormSimple() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="parentEmail">Email del Padre/Madre</Label>
+                  <Label htmlFor="parentEmail">Parent Email</Label>
                   <Input
                     id="parentEmail"
                     type="email"
@@ -378,7 +378,7 @@ export function StudentFormSimple() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="parentPhone">Teléfono del Padre/Madre</Label>
+                  <Label htmlFor="parentPhone">Parent Phone</Label>
                   <Input
                     id="parentPhone"
                     value={formData.parentPhone}
@@ -388,18 +388,18 @@ export function StudentFormSimple() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="medicalNotes">Notas Médicas</Label>
+                <Label htmlFor="medicalNotes">Medical Notes</Label>
                 <Textarea
                   id="medicalNotes"
                   value={formData.medicalNotes}
                   onChange={(e) => setFormData({ ...formData, medicalNotes: e.target.value })}
-                  placeholder="Alergias, medicamentos, condiciones especiales..."
+                  placeholder="Allergies, medications, special conditions..."
                 />
               </div>
 
               <Button type="submit" disabled={loading} className="w-full">
                 <Plus className="w-4 h-4 mr-2" />
-                {loading ? 'Guardando...' : 'Agregar Estudiante'}
+                {loading ? 'Saving...' : 'Add Student'}
               </Button>
             </form>
           )}
@@ -409,24 +409,24 @@ export function StudentFormSimple() {
             <form onSubmit={handleBatchSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="batchData">
-                  Datos de Estudiantes (CSV)
+                  Student Data (CSV)
                 </Label>
                 <Textarea
                   id="batchData"
                   value={batchData}
                   onChange={(e) => setBatchData(e.target.value)}
                   rows={10}
-                  placeholder="Juan, Pérez, 2020-05-15, M&#10;María, García, 2020-06-20, F&#10;Carlos, López, 2020-07-10, M"
+                  placeholder="John, Smith, 2020-05-15, M&#10;Mary, Garcia, 2020-06-20, F&#10;Charles, Lopez, 2020-07-10, M"
                   className="font-mono text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Formato: Nombre, Apellido, Fecha de Nacimiento (YYYY-MM-DD), Género (M/F)
+                  Format: First Name, Last Name, Date of Birth (YYYY-MM-DD), Gender (M/F)
                 </p>
               </div>
 
               <Button type="submit" disabled={loading} className="w-full">
                 <Upload className="w-4 h-4 mr-2" />
-                {loading ? 'Procesando...' : 'Crear Estudiantes'}
+                {loading ? 'Processing...' : 'Create Students'}
               </Button>
             </form>
           )}
