@@ -1191,16 +1191,9 @@ export default function DailyReports() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      const report = existingReports[student.id];
-                                      if (report) {
-                                        const phone = student.parentPhone?.replace(/\D/g, '');
-                                        const message = generateWhatsAppMessage(student, report);
-                                        window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${message}`, '_blank');
-                                      }
-                                    }}
-                                    className="border-green-500 text-green-600 hover:bg-green-50"
+                                    disabled={true}
+                                    className="border-gray-300 text-gray-400 cursor-not-allowed"
+                                    title="Deshabilitado en modo de prueba"
                                   >
                                     <MessageSquare className="w-4 h-4 mr-1" />
                                     WhatsApp
@@ -1208,22 +1201,9 @@ export default function DailyReports() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      const report = existingReports[student.id]
-                                      if (report) {
-                                        const fullReport = {
-                                          ...report,
-                                          student: {
-                                            name: student.name,
-                                            lastName: student.lastName,
-                                            parentEmail: student.parentEmail,
-                                            parentPhone: student.parentPhone
-                                          }
-                                        }
-                                        setEmailPreviewStudent(fullReport)
-                                      }
-                                    }}
+                                    disabled={true}
+                                    className="border-gray-300 text-gray-400 cursor-not-allowed"
+                                    title="Deshabilitado en modo de prueba"
                                   >
                                     <Mail className="w-4 h-4 mr-1" />
                                     Ver correo
@@ -1283,12 +1263,12 @@ export default function DailyReports() {
                       <div className="flex items-center gap-3">
                         <Button
                           variant="outline"
-                          onClick={() => {
-                            window.print();
-                          }}
+                          disabled={true}
+                          className="border-gray-300 text-gray-400 cursor-not-allowed"
+                          title="Función deshabilitada temporalmente"
                         >
                           <Download className="w-4 h-4 mr-2" />
-                          Download PDF
+                          Descargar PDF (Deshabilitado)
                         </Button>
                         <Button
                           variant="outline"
