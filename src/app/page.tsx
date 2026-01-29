@@ -80,6 +80,7 @@ export default function DailyReports() {
   const [recessNote, setRecessNote] = useState<string>('')
   const [bathroomPee, setBathroomPee] = useState<boolean>(false)
   const [bathroomPoop, setBathroomPoop] = useState<boolean>(false)
+  const [whatsappPreview, setWhatsappPreview] = useState<{ student: any, message: string } | null>(null)
 
   // Función de cierre de sesión
   const handleLogout = async () => {
@@ -1265,6 +1266,9 @@ export default function DailyReports() {
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <h3 className="font-semibold text-lg">Send Daily Reports</h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">Modo de Prueba</Badge>
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           {(() => {
                             const selectedCompleteStudent = selectedStudents.find(id =>
@@ -1287,14 +1291,36 @@ export default function DailyReports() {
                           Download PDF
                         </Button>
                         <Button
-                          className="bg-green-600 hover:bg-green-700 text-white shadow-lg px-8 h-12 text-lg"
-                          onClick={() => handleSendReports('whatsapp')}
+                          variant="outline"
+                          className="border-green-500 text-green-700 hover:bg-green-50 px-6 h-12 text-lg"
+                          onClick={() => {
+                            const completeStudents = selectedStudents.filter(id =>
+                              existingReports[id] && (existingReports[id].mood && existingReports[id].lunchIntake)
+                            )
+                            if (completeStudents.length > 0) {
+                              const studentId = completeStudents[0]
+                              const student = students.find(s => s.id === studentId)
+                              const report = existingReports[studentId]
+                              if (student && report) {
+                                const message = decodeURIComponent(generateWhatsAppMessage(student, report))
+                                setWhatsappPreview({ student, message })
+                              }
+                            }
+                          }}
                           disabled={selectedStudents.filter(id =>
                             existingReports[id] && (existingReports[id].mood && existingReports[id].lunchIntake)
                           ).length === 0}
                         >
                           <MessageSquare className="w-5 h-5 mr-3" />
-                          Send via WhatsApp
+                          Vista Previa WhatsApp
+                        </Button>
+                        <Button
+                          className="bg-gray-400 text-white shadow-lg px-8 h-12 text-lg cursor-not-allowed"
+                          disabled={true}
+                          title="Envíos deshabilitados durante el período de prueba"
+                        >
+                          <MessageSquare className="w-5 h-5 mr-3" />
+                          Enviar WhatsApp (Deshabilitado)
                         </Button>
                       </div>
                     </div>
@@ -1449,6 +1475,65 @@ export default function DailyReports() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Modal de Vista Previa de WhatsApp */}
+        {whatsappPreview && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-2xl max-h-[80vh] overflow-auto">
+              <CardHeader className="bg-green-50 border-b border-green-200">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-6 h-6 text-green-600" />
+                    <span>Vista Previa - Mensaje de WhatsApp</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setWhatsappPreview(null)}
+                  >
+                    ✕
+                  </Button>
+                </CardTitle>
+                <CardDescription>
+                  Alumno: {whatsappPreview.student.name} {whatsappPreview.student.lastName}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="bg-white border-2 border-green-200 rounded-lg p-6 mb-4">
+                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                    {whatsappPreview.message}
+                  </pre>
+                </div>
+                <div className="flex items-center gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(whatsappPreview.message)
+                      toast({
+                        title: "¡Copiado!",
+                        description: "El mensaje se copió al portapapeles",
+                      })
+                    }}
+                  >
+                    📋 Copiar Mensaje
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setWhatsappPreview(null)}
+                  >
+                    Cerrar
+                  </Button>
+                </div>
+                <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm text-orange-800">
+                    <strong>Modo de Prueba:</strong> Los envíos de WhatsApp están deshabilitados temporalmente.
+                    Puedes copiar este mensaje y enviarlo manualmente para probar.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   )
