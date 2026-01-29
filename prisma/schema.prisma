@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,152 +7,125 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Campuses (Mitras, Cumbres, Norte, Dominio, Anahuac)
 model Campus {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  code        String   @unique // "MITRAS", "CUMBRES", "NORTE", "DOMINIO", "ANAHUAC"
-  address     String?
-  phone       String?
-  groups      Group[]
-  students    Student[]
-  users       User[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String    @id @default(cuid())
+  name      String    @unique
+  code      String    @unique
+  address   String?
+  phone     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  groups    Group[]
+  students  Student[]
+  users     User[]
 }
 
-// Grupos (Toddlers, Prenursery, Preescolar)
 model Group {
-  id          String   @id @default(cuid())
-  name        String
-  level       String   // "toddlers", "prenursery", "preescolar"
-  campusId    String
-  campus      Campus   @relation(fields: [campusId], references: [id], onDelete: Cascade)
-  students    Student[]
-  users       User[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String    @id @default(cuid())
+  name      String
+  level     String
+  campusId  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  campus    Campus    @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  students  Student[]
+  users     User[]
 
   @@unique([campusId, name])
 }
 
-// Usuarios con roles
 model User {
-  id          String   @id @default(cuid())
-  name        String
-  email       String   @unique
-  password    String
-  role        String   // "rector", "vicerrector", "directora", "maestra"
-  campusId    String?
-  groupId     String?
-  campus      Campus?  @relation(fields: [campusId], references: [id], onDelete: SetNull)
-  group       Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// Estudiantes (niños de preescolar)
-model Student {
-  id          String   @id @default(cuid())
-  name        String
-  lastName    String
-  dateOfBirth DateTime
-  gender      String // "M" o "F"
-  emergencyContact String
-  emergencyPhone  String
-  parentEmail String
-  parentPhone String
-  medicalNotes String?
-  campusId    String
-  campus      Campus   @relation(fields: [campusId], references: [id], onDelete: Cascade)
-  groupId     String
-  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  dailyReports DailyReport[]
-  weeklySummaries WeeklySummary[]
-}
-
-// Reportes diarios
-model DailyReport {
-  id          String   @id @default(cuid())
-  studentId   String
-  student     Student @relation(fields: [studentId], references: [id])
-  date        DateTime @default(now())
-
-  // Estado de ánimo
-  mood        String // "happy", "thoughtful", "sad", "angry"
-
-  // Comida
-  lunchIntake  String // "all", "half", "none"
-
-  // Siesta
-  hadNap       Boolean @default(false)
-
-  // Baño
-  usedBathroom Boolean @default(false)
-
-  // Pañal
-  diaperChanged Boolean @default(false)
-  diaperNotes   String?
-
-  // Medicamentos
-  medicationGiven Boolean @default(false)
-  medicationName  String?
-  medicationNotes String?
-
-  // Logros del día (individual)
-  dailyAchievements String?
-
-  // Observaciones generales
-  generalNotes      String?
-
-  // Estado del reporte
-  isComplete        Boolean @default(false)
-  sentViaEmail      Boolean @default(false)
-  sentViaWhatsApp   Boolean @default(false)
-  sentAt            DateTime?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// Resúmenes semanales (con IA)
-model WeeklySummary {
-  id          String   @id @default(cuid())
-  studentId   String
-  student     Student @relation(fields: [studentId], references: [id])
-  weekStart   DateTime
-  weekEnd     DateTime
-
-  // Resumen de comportamiento
-  behaviorSummary String
-
-  // Sugerencias de IA para actividades en casa
-  aiSuggestions    String
-
-  // Estado de envío
-  sentViaEmail     Boolean @default(false)
-  sentAt           DateTime?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// Configuración de envío (correo y WhatsApp)
-model NotificationSettings {
   id        String   @id @default(cuid())
-  enabled   Boolean  @default(true)
-  method    String   // "email", "whatsapp", "both"
+  name      String
+  email     String   @unique
+  password  String
+  role      String
+  campusId  String?
+  groupId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  group     Group?   @relation(fields: [groupId], references: [id])
+  campus    Campus?  @relation(fields: [campusId], references: [id])
+}
 
-  // Configuración de correo
-  emailFrom String?
-  emailSubject String?
+model Student {
+  id               String          @id @default(cuid())
+  name             String
+  lastName         String
+  dateOfBirth      DateTime
+  gender           String
+  emergencyContact String
+  emergencyPhone   String
+  parentEmail      String
+  parentPhone      String
+  medicalNotes     String?
+  campusId         String
+  groupId          String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  dailyReports     DailyReport[]
+  group            Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  campus           Campus          @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  weeklySummaries  WeeklySummary[]
+}
 
-  // Configuración de WhatsApp
-  whatsappEnabled Boolean @default(false)
+model DailyReport {
+  id                String    @id @default(cuid())
+  studentId         String
+  date              DateTime  @default(now())
+  mood              String
+  lunchIntake       String
+  hadNap            Boolean   @default(false)
+  usedBathroom      Boolean   @default(false)
+  diaperChanged     Boolean   @default(false)
+  diaperNotes       String?
+  medicationGiven   Boolean   @default(false)
+  medicationName    String?
+  medicationNotes   String?
+  dailyAchievements String?
+  generalNotes      String?
+  isComplete        Boolean   @default(false)
+  sentViaEmail      Boolean   @default(false)
+  sentViaWhatsApp   Boolean   @default(false)
+  sentAt            DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  student           Student   @relation(fields: [studentId], references: [id])
+}
+
+model WeeklySummary {
+  id              String    @id @default(cuid())
+  studentId       String
+  weekStart       DateTime
+  weekEnd         DateTime
+  behaviorSummary String
+  aiSuggestions   String
+  sentViaEmail    Boolean   @default(false)
+  sentAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  student         Student   @relation(fields: [studentId], references: [id])
+}
+
+model NotificationSettings {
+  id               String   @id @default(cuid())
+  enabled          Boolean  @default(true)
+  method           String
+  emailFrom        String?
+  emailSubject     String?
+  whatsappEnabled  Boolean  @default(false)
   whatsappTemplate String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String?
+  userName  String?
+  userRole  String?
+  content   String
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

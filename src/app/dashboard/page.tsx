@@ -26,8 +26,10 @@ import {
   Smile,
   Brain,
   RefreshCw,
-  MapPin
+  MapPin,
+  MessageSquare
 } from 'lucide-react'
+import { FeedbackList } from '@/components/feedback-list'
 
 export default function Dashboard() {
   const [selectedCampus, setSelectedCampus] = useState<string>('')
@@ -216,6 +218,10 @@ export default function Dashboard() {
             <TabsTrigger value="comparisons" className="gap-2">
               <Target className="w-4 h-4" />
               Comparaciones
+            </TabsTrigger>
+            <TabsTrigger value="feedback" className="gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Sugerencias
             </TabsTrigger>
           </TabsList>
 
@@ -545,6 +551,11 @@ export default function Dashboard() {
                 </ScrollArea>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Tab 4: Sugerencias */}
+          <TabsContent value="feedback" className="space-y-6">
+            <FeedbackList />
           </TabsContent>
         </Tabs>
       </div>

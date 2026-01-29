@@ -49,3 +49,5 @@ prompt
 server.log
 
 !db/custom.db
+
+.vercel

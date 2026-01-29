@@ -96,7 +96,7 @@ export function DashboardSummary({ userRole }: DashboardSummaryProps) {
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <RefreshCw className={`w-5 h-5 text-primary ${loading ? 'animate-spin' : ''}`} />
-            <div>Daily Summary</div>
+            <div>Resumen Diario</div>
           </div>
           <RefreshCw
             className="w-5 h-5 text-muted-foreground cursor-pointer hover:text-primary"
@@ -104,14 +104,14 @@ export function DashboardSummary({ userRole }: DashboardSummaryProps) {
           />
         </CardTitle>
         <CardDescription>
-          Today's report status
+          Estado de los reportes de hoy
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {!summary && loading && (
           <div className="flex items-center justify-center p-12">
             <div className="animate-spin inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-            <p className="ml-4 text-muted-foreground">Loading...</p>
+            <p className="ml-4 text-muted-foreground">Cargando...</p>
           </div>
         )}
 
@@ -121,21 +121,21 @@ export function DashboardSummary({ userRole }: DashboardSummaryProps) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 rounded-lg bg-primary/5 border-primary/10">
                 <div className="text-3xl font-bold text-primary">{summary.totalStudents}</div>
-                <div className="text-sm text-muted-foreground">Total Students</div>
+                <div className="text-sm text-muted-foreground">Total Alumnos</div>
               </div>
               <div className="text-center p-4 rounded-lg bg-green-500/10 border-green-500/20">
                 <div className="text-3xl font-bold text-green-600">{summary.completeStudents}</div>
-                <div className="text-sm text-muted-foreground">Completed</div>
+                <div className="text-sm text-muted-foreground">Completados</div>
               </div>
               <div className="text-center p-4 rounded-lg bg-orange-500/10 border-orange-500/20">
                 <div className="text-3xl font-bold text-orange-600">{summary.incompleteStudents}</div>
-                <div className="text-sm text-muted-foreground">Missing</div>
+                <div className="text-sm text-muted-foreground">Pendientes</div>
               </div>
               <div className="text-center p-4 rounded-lg bg-blue-500/10 border-blue-500/20">
                 <div className="text-3xl font-bold text-blue-600">
                   {summary.totalStudents > 0 ? Math.round((summary.completeStudents / summary.totalStudents) * 100) : 0}%
                 </div>
-                <div className="text-sm text-muted-foreground">Progress</div>
+                <div className="text-sm text-muted-foreground">Progreso</div>
               </div>
             </div>
 
@@ -145,7 +145,7 @@ export function DashboardSummary({ userRole }: DashboardSummaryProps) {
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="w-5 h-5 text-orange-500" />
-                    <CardTitle className="text-lg text-orange-900">{incompleteStudents.length} Missing Reports</CardTitle>
+                    <CardTitle className="text-lg text-orange-900">{incompleteStudents.length} Reportes Pendientes</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -165,13 +165,13 @@ export function DashboardSummary({ userRole }: DashboardSummaryProps) {
                           </div>
                           <div className="font-bold text-slate-900">{s.studentName} {s.studentLastName}</div>
                           <div className="text-[10px] text-slate-500 mt-1 flex gap-2">
-                            <span className={s.hasMood ? 'text-green-600' : ''}>{s.hasMood ? '✓' : '✗'} Mood</span>
-                            <span className={s.hasLunch ? 'text-green-600' : ''}>{s.hasLunch ? '✓' : '✗'} Snack</span>
-                            <span className={s.hasBehavior ? 'text-green-600' : ''}>{s.hasBehavior ? '✓' : '✗'} Behavior</span>
+                            <span className={s.hasMood ? 'text-green-600' : ''}>{s.hasMood ? '✓' : '✗'} Ánimo</span>
+                            <span className={s.hasLunch ? 'text-green-600' : ''}>{s.hasLunch ? '✓' : '✗'} Lonche</span>
+                            <span className={s.hasBehavior ? 'text-green-600' : ''}>{s.hasBehavior ? '✓' : '✗'} Conducta</span>
                           </div>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">Pending</Badge>
+                      <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">Pendiente</Badge>
                     </div>
                   ))}
                 </CardContent>
@@ -184,7 +184,7 @@ export function DashboardSummary({ userRole }: DashboardSummaryProps) {
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <CardTitle className="text-lg text-slate-900">{completedStudents.length} Completed Reports</CardTitle>
+                    <CardTitle className="text-lg text-slate-900">{completedStudents.length} Reportes Completos</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -220,8 +220,8 @@ export function DashboardSummary({ userRole }: DashboardSummaryProps) {
             {summary.completeStudents === summary.totalStudents && summary.totalStudents > 0 && (
               <div className="text-center py-12 bg-green-500/5 rounded-2xl border-2 border-dashed border-green-500/20">
                 <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-green-900 mb-2">Excellent!</h3>
-                <p className="text-green-700">All reports for today are complete.</p>
+                <h3 className="text-2xl font-bold text-green-900 mb-2">¡Excelente!</h3>
+                <p className="text-green-700">Todos los reportes de hoy están completos.</p>
               </div>
             )}
           </>

@@ -41,16 +41,16 @@ export async function GET(request: NextRequest) {
     console.log('Campus Efectivo:', profile?.campusId)
 
     // Obtener reportes del día
-    // NOTA: Para simplificar, buscamos los reportes que coincidan con la fecha ISO YYYY-MM-DD
+    const useInner = !!(effectiveGroupId || (profile?.role === 'directora' && profile.campusId));
     let reportsQuery = supabase
       .from('daily_reports')
-      .select('*, students(id, name, "lastName", "groupId", groups(name))')
+      .select(`*, students${useInner ? '!inner' : ''}(id, name, "lastName", "groupId", groups(name))`)
       .eq('date', date)
 
     if (effectiveGroupId) {
-      reportsQuery = reportsQuery.eq('student.groupId', effectiveGroupId)
+      reportsQuery = reportsQuery.eq('students.groupId', effectiveGroupId)
     } else if (profile?.role === 'directora' && profile.campusId) {
-      reportsQuery = reportsQuery.eq('student.campusId', profile.campusId)
+      reportsQuery = reportsQuery.eq('students.campusId', profile.campusId)
     }
 
     const { data: reports, error: reportsError } = await reportsQuery
@@ -92,8 +92,8 @@ export async function GET(request: NextRequest) {
       if (!reportsByStudent.has(studentId)) {
         reportsByStudent.set(studentId, {
           studentId,
-          studentName: report.student?.name || 'N/A',
-          studentLastName: report.student?.lastName || '',
+          studentName: report.students?.name || 'N/A',
+          studentLastName: report.students?.lastName || '',
           hasMood: false,
           hasLunch: false,
           hasBehavior: false,

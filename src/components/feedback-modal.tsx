@@ -26,10 +26,18 @@ export function FeedbackModal() {
 
         setIsSending(true)
         try {
+            const userStr = localStorage.getItem('user')
+            const user = userStr ? JSON.parse(userStr) : null
+
             const response = await fetch('/api/feedback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content })
+                body: JSON.stringify({
+                    content,
+                    userId: user?.id,
+                    userName: user?.name,
+                    userRole: user?.role
+                })
             })
 
             if (response.ok) {

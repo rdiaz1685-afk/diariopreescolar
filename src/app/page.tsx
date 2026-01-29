@@ -685,6 +685,9 @@ export default function DailyReports() {
               </CardHeader>
             </Card>
 
+            {/* Resumen de Captura del Día */}
+            <DashboardSummary userRole={currentUser?.role} />
+
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Lista de estudiantes */}
               <Card className="card-hover">
@@ -1012,9 +1015,6 @@ export default function DailyReports() {
                   </CardContent>
                 </Card>
               )}
-
-              {/* Resumen del Día */}
-              <DashboardSummary userRole={currentUser?.role} />
             </div>
           </TabsContent>
 
@@ -1161,8 +1161,8 @@ export default function DailyReports() {
                           <div
                             key={student.id}
                             className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${selectedStudents.includes(student.id)
-                                ? 'border-primary bg-primary/5 shadow-md'
-                                : 'bg-secondary/50 hover:border-primary/50 hover:bg-primary/5 cursor-pointer'
+                              ? 'border-primary bg-primary/5 shadow-md'
+                              : 'bg-secondary/50 hover:border-primary/50 hover:bg-primary/5 cursor-pointer'
                               }`}
                             onClick={() => toggleStudent(student.id)}
                           >
