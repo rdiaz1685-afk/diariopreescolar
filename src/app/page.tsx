@@ -1500,7 +1500,7 @@ export default function DailyReports() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="bg-white border-2 border-green-200 rounded-lg p-6 mb-4">
-                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-black">
                     {whatsappPreview.message}
                   </pre>
                 </div>
