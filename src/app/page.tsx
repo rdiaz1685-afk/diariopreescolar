@@ -128,7 +128,11 @@ export default function DailyReports() {
       try {
         const res = await fetch('/api/auth/me')
         const data = await res.json()
-        if (!data.error) setCurrentUser(data)
+        if (!data.error) {
+          setCurrentUser(data)
+          // Actualizar localStorage para que componentes como FeedbackModal tengan datos frescos
+          localStorage.setItem('user', JSON.stringify(data))
+        }
       } catch (err) {
         console.error('Error fetching user:', err)
       }
