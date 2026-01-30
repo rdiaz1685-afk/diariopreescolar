@@ -42,8 +42,14 @@ export function LoginForm() {
         description: `Hola ${user.name}, ${user.role === 'maestra' ? 'maestra' : ''} has iniciado sesión`
       })
 
-      // Recargar la página para actualizar la interfaz
-      setTimeout(() => window.location.reload(), 1000)
+      // Recargar la página o redirigir según el rol
+      setTimeout(() => {
+        if (user.role === 'admin' || user.role === 'rector') {
+          window.location.href = '/dashboard'
+        } else {
+          window.location.reload()
+        }
+      }, 1000)
     } catch (error) {
       toast({
         title: 'Error',

@@ -1,76 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import crypto from 'crypto'
-
-// Clave secreta para JWT (en producción debe estar en variables de entorno)
-const JWT_SECRET = process.env.JWT_SECRET || 'secret-key-change-in-production'
-
-interface LoginRequest {
-  email: string
-  password: string
-}
+import { createClient } from '@/lib/supabase-server'
 
 export async function POST(request: NextRequest) {
   try {
-    const body: LoginRequest = await request.json()
+    const { email, password } = await request.json()
+    const supabase = await createClient()
 
-    console.log('=== Intento de login ===')
-    console.log('Email:', body.email)
+    console.log('=== Intento de login (Supabase) ===')
+    console.log('Email:', email)
 
-    // Buscar usuario por email
-    const user = await db.user.findUnique({
-      where: { email: body.email }
+    // 1. Iniciar sesión con Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password
     })
 
-    if (!user) {
-      console.log('❌ Usuario no encontrado')
+    if (authError) {
+      console.log('❌ Error de autenticación:', authError.message)
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
         { status: 401 }
       )
     }
 
-    // Verificar password usando crypto (comparación simple)
-    // NOTA: En producción, usa bcrypt para mejor seguridad
-    const hash = crypto
-      .createHash('sha256')
-      .update(body.password)
-      .digest('hex')
+    // 2. Obtener el perfil del usuario para tener los metadatos (campus, grupo, rol)
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single()
 
-    if (user.password !== hash) {
-      console.log('❌ Password incorrecto')
+    if (profileError || !profile) {
+      console.log('❌ Perfil no encontrado para el usuario autenticado')
       return NextResponse.json(
-        { error: 'Credenciales inválidas' },
-        { status: 401 }
+        { error: 'El perfil de usuario no existe en la base de datos' },
+        { status: 404 }
       )
     }
 
-    console.log('✅ Login exitoso:', user.name)
+    console.log('✅ Login exitoso:', profile.name)
 
-    // Crear token simple (JWT sin dependencias externas)
+    // Crear un token compatible con el formato actual (base64 de datos relevantes)
+    // Nota: El login de Supabase ya gestiona la sesión mediante cookies, 
+    // pero mantenemos el retorno de datos para compatibilidad con el frontend.
     const token = Buffer.from(JSON.stringify({
-      userId: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      campusId: user.campusId,
-      groupId: user.groupId
+      userId: profile.id,
+      email: profile.email,
+      name: profile.name,
+      role: profile.role,
+      campusId: profile.campusId,
+      groupId: profile.groupId
     })).toString('base64')
 
-    // Retornar datos del usuario
-    const userResponse = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      campusId: user.campusId,
-      groupId: user.groupId,
+    return NextResponse.json({
+      id: profile.id,
+      name: profile.name,
+      email: profile.email,
+      role: profile.role,
+      campusId: profile.campusId,
+      groupId: profile.groupId,
       token
-    }
+    })
 
-    return NextResponse.json(userResponse)
   } catch (error) {
-    console.error('❌ Error en login:', error)
+    console.error('❌ Error general en login:', error)
     return NextResponse.json(
       { error: 'Error al iniciar sesión' },
       { status: 500 }

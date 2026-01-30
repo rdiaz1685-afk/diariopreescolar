@@ -17,9 +17,9 @@ export async function GET() {
             }
         })
 
-        const email = 'rafael.diaz@cambridgemty.edu.mx'
-        const password = 'password123'
-        const name = 'Rafael Diaz'
+        const email = 'admin@diariopreescolar.com'
+        const password = 'admin.pass.2026'
+        const name = 'Admin General'
 
         console.log(`🚀 Iniciando creación forzada de admin para: ${email}`)
 
