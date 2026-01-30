@@ -22,9 +22,11 @@ export function FeedbackList() {
     useEffect(() => {
         const fetchFeedback = async () => {
             try {
-                const response = await fetch('/api/feedback')
+                console.log('--- Cargando feedback desde API ---')
+                const response = await fetch('/api/feedback', { cache: 'no-store' })
                 if (response.ok) {
                     const data = await response.json()
+                    console.log('Feedback recibido:', data)
                     setFeedback(data)
                 }
             } catch (error) {
