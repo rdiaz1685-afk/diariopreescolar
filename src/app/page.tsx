@@ -585,7 +585,7 @@ export default function DailyReports() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent neon-text">
+            <h1 className="text-4xl font-extrabold bg-gradient-to-r from-primary via-secondary-foreground to-accent bg-clip-text text-transparent">
               Daily Reports
             </h1>
             <p className="text-muted-foreground mt-1">
@@ -667,7 +667,7 @@ export default function DailyReports() {
           {/* Tab 1: Captura Diaria */}
           <TabsContent value="daily" className="space-y-6">
             {/* Buscador y selección */}
-            <Card className="card-hover neon-border">
+            <Card className="card-hover">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1">
@@ -719,11 +719,11 @@ export default function DailyReports() {
                         {filteredStudents.map((student) => (
                           <Card
                             key={student.id}
-                            className={`transition-all border-2 ${currentUser?.role === 'maestra' ? 'cursor-pointer' : 'cursor-default'} ${selectedStudents.includes(student.id)
-                              ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
+                            className={`transition-all border-2 rounded-2xl ${currentUser?.role === 'maestra' ? 'cursor-pointer' : 'cursor-default'} ${selectedStudents.includes(student.id)
+                              ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
                               : existingReports[student.id]
-                                ? 'border-green-500/30 bg-green-50/50 hover:border-green-500/50'
-                                : 'border-red-500/20 bg-red-50/30 hover:border-red-500/40'
+                                ? 'border-secondary bg-secondary/20 hover:border-secondary/50'
+                                : 'border-accent/40 bg-accent/10 hover:border-accent/60'
                               }`}
                             onClick={() => currentUser?.role === 'maestra' && toggleStudent(student.id)}
                           >
@@ -787,11 +787,10 @@ export default function DailyReports() {
               {/* Panel de acciones - SOLO PARA MAESTRAS */}
               {currentUser?.role === 'maestra' ? (
                 <div className="space-y-6">
-                  {/* 1. During the day I was */}
-                  <Card className="card-hover overflow-hidden border-none bg-white shadow-md ring-1 ring-blue-100">
-                    <CardHeader className="pb-2 bg-blue-50/50">
-                      <CardTitle className="text-xl font-bold text-blue-900 flex items-center gap-2">
-                        <Smile className="w-6 h-6 text-blue-600" />
+                  <Card className="card-hover overflow-hidden border-none bg-white shadow-md ring-1 ring-primary/20">
+                    <CardHeader className="pb-2 bg-primary/10">
+                      <CardTitle className="text-xl font-bold text-primary flex items-center gap-2">
+                        <Smile className="w-6 h-6 text-primary" />
                         During the day I was
                       </CardTitle>
                     </CardHeader>
@@ -872,10 +871,10 @@ export default function DailyReports() {
                   </Card>
 
                   {/* 4. Snack: I ate... */}
-                  <Card className="card-hover overflow-hidden border-none bg-white shadow-md ring-1 ring-green-100">
-                    <CardHeader className="pb-2 bg-green-50/50">
-                      <CardTitle className="text-xl font-bold text-green-900 flex items-center gap-2">
-                        <Utensils className="w-6 h-6 text-green-600" />
+                  <Card className="card-hover overflow-hidden border-none bg-white shadow-md ring-1 ring-secondary/20">
+                    <CardHeader className="pb-2 bg-secondary/10">
+                      <CardTitle className="text-xl font-bold text-secondary-foreground flex items-center gap-2">
+                        <Utensils className="w-6 h-6 text-secondary-foreground" />
                         Snack: I ate...
                       </CardTitle>
                     </CardHeader>
@@ -1038,7 +1037,7 @@ export default function DailyReports() {
           <TabsContent value="send" className="space-y-6">
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Resumen del día */}
-              <Card className="card-hover neon-border">
+              <Card className="card-hover">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Send className="w-5 h-5 text-primary" />

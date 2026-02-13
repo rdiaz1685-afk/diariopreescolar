@@ -75,7 +75,7 @@ export function HelpCenter() {
                     <Button
                         variant="default"
                         size="icon"
-                        className="h-16 w-16 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)] bg-[#10b981] text-white border-2 border-white/40 transition-all hover:scale-110 active:scale-95 group relative"
+                        className="h-16 w-16 rounded-full shadow-lg bg-primary text-primary-foreground border-2 border-white/40 transition-all hover:scale-110 active:scale-95 group relative"
                     >
                         <HelpCircle className="h-8 w-8 transition-transform group-hover:rotate-12" />
 
@@ -89,14 +89,14 @@ export function HelpCenter() {
                     </Button>
                 </div>
             </SheetTrigger>
-            <SheetContent className="w-[400px] sm:w-[540px] border-l border-white/10 bg-black/95 backdrop-blur-xl text-white">
-                <SheetHeader className="pb-6 border-b border-white/5">
+            <SheetContent className="w-[400px] sm:w-[540px] border-l border-border bg-card/95 backdrop-blur-xl text-foreground">
+                <SheetHeader className="pb-6 border-b border-border">
                     <div className="flex items-center gap-2 text-primary mb-2">
                         <BookOpen className="h-5 w-5" />
                         <span className="text-xs font-bold uppercase tracking-widest">Centro de Aprendizaje</span>
                     </div>
-                    <SheetTitle className="text-3xl font-extrabold tracking-tight text-white">¿Cómo podemos ayudarte?</SheetTitle>
-                    <SheetDescription className="text-zinc-400 text-base">
+                    <SheetTitle className="text-3xl font-extrabold tracking-tight text-foreground">¿Cómo podemos ayudarte?</SheetTitle>
+                    <SheetDescription className="text-muted-foreground text-base">
                         Guías rápidas y micro-tutoriales para dominar la plataforma.
                     </SheetDescription>
                 </SheetHeader>
@@ -162,7 +162,7 @@ export function HelpCenter() {
                                             <Card
                                                 key={tutorial.id}
                                                 onClick={() => setSelectedVideo(tutorial)}
-                                                className="p-4 bg-zinc-900/50 border-white/5 hover:bg-zinc-800/80 transition-all cursor-pointer group"
+                                                className="p-4 bg-background/50 border-border hover:bg-secondary/20 transition-all cursor-pointer group card-hover shadow-sm"
                                             >
                                                 <div className="flex gap-4">
                                                     <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-110 transition-transform">

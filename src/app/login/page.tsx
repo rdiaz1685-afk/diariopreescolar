@@ -145,7 +145,7 @@ export default function LoginPage() {
                 transition={{ duration: 0.5 }}
                 className="w-full max-w-md z-10"
             >
-                <Card className="border-none shadow-2xl bg-card/80 backdrop-blur-xl neon-border overflow-hidden">
+                <Card className="border-none shadow-2xl bg-card/80 backdrop-blur-xl overflow-hidden soft-shadow">
                     <CardHeader className="space-y-1 text-center relative">
                         <AnimatePresence mode="wait">
                             {mode === 'login' ? (
@@ -160,7 +160,7 @@ export default function LoginPage() {
                                             <Baby className="w-10 h-10 text-primary" />
                                         </div>
                                     </div>
-                                    <CardTitle className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                                    <CardTitle className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-secondary-foreground to-accent bg-clip-text text-transparent">
                                         Diario Preescolar
                                     </CardTitle>
                                     <CardDescription className="text-muted-foreground text-lg">

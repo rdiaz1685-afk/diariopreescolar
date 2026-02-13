@@ -91,7 +91,7 @@ export function DashboardSummary({ userRole }: DashboardSummaryProps) {
   }
 
   return (
-    <Card className="neon-border">
+    <Card className="soft-shadow border-none">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -119,23 +119,23 @@ export function DashboardSummary({ userRole }: DashboardSummaryProps) {
           <>
             {/* Generales */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 rounded-lg bg-primary/5 border-primary/10">
-                <div className="text-3xl font-bold text-primary">{summary.totalStudents}</div>
-                <div className="text-sm text-muted-foreground">Total Alumnos</div>
+              <div className="text-center p-4 rounded-3xl bg-primary/10 border-2 border-primary/5">
+                <div className="text-3xl font-extrabold text-primary">{summary.totalStudents}</div>
+                <div className="text-sm font-medium text-muted-foreground">Total Alumnos</div>
               </div>
-              <div className="text-center p-4 rounded-lg bg-green-500/10 border-green-500/20">
-                <div className="text-3xl font-bold text-green-600">{summary.completeStudents}</div>
-                <div className="text-sm text-muted-foreground">Completados</div>
+              <div className="text-center p-4 rounded-3xl bg-secondary/20 border-2 border-secondary/10">
+                <div className="text-3xl font-extrabold text-secondary-foreground">{summary.completeStudents}</div>
+                <div className="text-sm font-medium text-muted-foreground">Completados</div>
               </div>
-              <div className="text-center p-4 rounded-lg bg-orange-500/10 border-orange-500/20">
-                <div className="text-3xl font-bold text-orange-600">{summary.incompleteStudents}</div>
-                <div className="text-sm text-muted-foreground">Pendientes</div>
+              <div className="text-center p-4 rounded-3xl bg-accent/20 border-2 border-accent/10">
+                <div className="text-3xl font-extrabold text-accent-foreground">{summary.incompleteStudents}</div>
+                <div className="text-sm font-medium text-muted-foreground">Pendientes</div>
               </div>
-              <div className="text-center p-4 rounded-lg bg-blue-500/10 border-blue-500/20">
-                <div className="text-3xl font-bold text-blue-600">
+              <div className="text-center p-4 rounded-3xl bg-primary/5 border-2 border-primary/5">
+                <div className="text-3xl font-extrabold text-primary">
                   {summary.totalStudents > 0 ? Math.round((summary.completeStudents / summary.totalStudents) * 100) : 0}%
                 </div>
-                <div className="text-sm text-muted-foreground">Progreso</div>
+                <div className="text-sm font-medium text-muted-foreground">Progreso</div>
               </div>
             </div>
 
@@ -144,8 +144,8 @@ export function DashboardSummary({ userRole }: DashboardSummaryProps) {
               <Card className="border-2 border-orange-500/50 bg-orange-50/5">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-orange-500" />
-                    <CardTitle className="text-lg text-orange-900">{incompleteStudents.length} Reportes Pendientes</CardTitle>
+                    <AlertCircle className="w-5 h-5 text-accent-foreground" />
+                    <CardTitle className="text-lg text-accent-foreground">{incompleteStudents.length} Reportes Pendientes</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -183,8 +183,8 @@ export function DashboardSummary({ userRole }: DashboardSummaryProps) {
               <Card className="border-none bg-slate-50/50">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <CardTitle className="text-lg text-slate-900">{completedStudents.length} Reportes Completos</CardTitle>
+                    <CheckCircle2 className="w-5 h-5 text-secondary-foreground" />
+                    <CardTitle className="text-lg text-secondary-foreground">{completedStudents.length} Reportes Completos</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
