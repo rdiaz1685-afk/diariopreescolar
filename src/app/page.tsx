@@ -284,10 +284,10 @@ export default function DailyReports() {
         cleanNotes = cleanNotes.replace(/Siesta: [\w\s\+]+\.\s*/, "").trim()
         setGeneralNotes(cleanNotes)
 
-        // Extraer Bathroom (Pee/Poop) de diaperNotes
+        // Extraer Bathroom (Liquid/Solid) de diaperNotes
         const bathroomNotes = report.diaperNotes || ""
-        setBathroomPee(bathroomNotes.includes('Pee'))
-        setBathroomPoop(bathroomNotes.includes('Poop'))
+        setBathroomPee(bathroomNotes.includes('Liquid'))
+        setBathroomPoop(bathroomNotes.includes('Solid'))
       }
     } else if (selectedStudents.length === 0) {
       // Limpiar campos si no hay selección
@@ -390,8 +390,8 @@ export default function DailyReports() {
 
         // Formatear notas de baño
         let finalBathroomNotes = "";
-        if (bathroomPee) finalBathroomNotes += "Pee ";
-        if (bathroomPoop) finalBathroomNotes += "Poop";
+        if (bathroomPee) finalBathroomNotes += "Liquid ";
+        if (bathroomPoop) finalBathroomNotes += "Solid";
         finalBathroomNotes = finalBathroomNotes.trim();
 
         return {
@@ -916,7 +916,7 @@ export default function DailyReports() {
                             }`}
                           onClick={() => setBathroomPee(!bathroomPee)}
                         >
-                          <span className={`text-lg font-bold uppercase tracking-wider ${bathroomPee ? 'text-orange-700' : 'text-slate-600'}`}>Pee</span>
+                          <span className={`text-lg font-bold uppercase tracking-wider ${bathroomPee ? 'text-orange-700' : 'text-slate-600'}`}>Liquid</span>
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${bathroomPee ? 'bg-orange-500 text-white shadow-md' : 'bg-slate-200'}`}>
                             {bathroomPee && <CheckCircle2 className="w-5 h-5" />}
                           </div>
@@ -926,7 +926,7 @@ export default function DailyReports() {
                             }`}
                           onClick={() => setBathroomPoop(!bathroomPoop)}
                         >
-                          <span className={`text-lg font-bold uppercase tracking-wider ${bathroomPoop ? 'text-orange-700' : 'text-slate-600'}`}>Poop</span>
+                          <span className={`text-lg font-bold uppercase tracking-wider ${bathroomPoop ? 'text-orange-700' : 'text-slate-600'}`}>Solid</span>
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${bathroomPoop ? 'bg-orange-500 text-white shadow-md' : 'bg-slate-200'}`}>
                             {bathroomPoop && <CheckCircle2 className="w-5 h-5" />}
                           </div>
